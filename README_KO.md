@@ -22,7 +22,7 @@
 
 1.  **스킬 위치 확인**: 이 리포지토리가 skills 폴더 안에 있는지 확인하세요:
     ```bash
-    ~/.gemini/skills/antigravity-subagents/
+    ~/.gemini/skills/antigravity-swarm/
     ```
 2.  **의존성 패키지 설치**:
 
@@ -113,7 +113,7 @@ IDE에서 Gemini Agent와 대화하던 중, 복잡한 작업을 에이전트가 
 ## 디렉토리 구조 (Directory Structure)
 
 ```text
-antigravity-subagents/
+antigravity-swarm/
 ├── scripts/
 │   ├── planner.py       # "Hiring Manager" (subagents.yaml 생성)
 │   ├── orchestrator.py  # "Project Manager" (에이전트 실행 및 관리)

@@ -22,7 +22,7 @@ This skill allows you to spawn multiple specialized AI agents (Sub-Agents) to wo
 
 1.  **Locate the Skill**: Ensure this repository is in your skills folder:
     ```bash
-    ~/.gemini/skills/antigravity-subagents/
+    ~/.gemini/skills/antigravity-swarm/
     ```
 2.  **Install Dependencies**:
 
@@ -113,7 +113,7 @@ By design, the **final agent** in any generated team is strictly enforced to be 
 ## Directory Structure
 
 ```text
-antigravity-subagents/
+antigravity-swarm/
 ├── scripts/
 │   ├── planner.py       # The "Hiring Manager" (Generates subagents.yaml)
 │   ├── orchestrator.py  # The "Project Manager" (Runs the agents)

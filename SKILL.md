@@ -1,5 +1,5 @@
 ---
-name: antigravity-subagents
+name: antigravity-swarm
 description: Deploys autonomous sub-agents to perform tasks in the Antigravity IDE. Supports both manual dispatch and dynamic "Auto-Hiring" of agent teams.
 ---
 

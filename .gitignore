@@ -1,0 +1,19 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.env
+
+# MacOS
+.DS_Store
+
+# Antigravity/Gemini
+task_plan.md
+findings.md
+progress.md
+logs/
+.gemini/

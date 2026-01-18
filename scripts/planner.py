@@ -36,7 +36,10 @@ Rules for hiring:
 5. [CRITICAL] The FINAL agent in the list MUST be a 'Quality_Validator'.
    - Role: Verify all work done by previous agents.
    - Responsibilities: Check file existence, validate code syntax (if applicable), and ensure the mission goal is met.
-6. Output the team configuration in YAML format.
+6. Assign an execution mode:
+   - 'parallel' (default): For agents that can work simultaneously.
+   - 'serial': For agents that must wait for parallel tasks to finish (e.g., summarizers, aggregators).
+7. [CRITICAL] The FINAL agent must be 'Quality_Validator' (always runs last).
 
 Output Format:
 Please output ONE single YAML block enclosed in tripple backticks (```yaml).
@@ -47,6 +50,7 @@ subagents:
     description: "Short description of role"
     color: "color_name"
     model: "gemini-model-name"
+    mode: "parallel" # or "serial"
     prompt: |
       You are [Role].
       [Detailed instructions...]

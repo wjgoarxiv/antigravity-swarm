@@ -18,11 +18,12 @@ SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 DISPATCH_SCRIPT = os.path.join(SCRIPT_DIR, "dispatch_agent.py")
 
 class SubAgentRunner:
-    def __init__(self, name, prompt, color, model="auto-gemini-3"):
+    def __init__(self, name, prompt, color, model="auto-gemini-3", mode="parallel"):
         self.name = name
         self.prompt = prompt
         self.color = color
         self.model = model
+        self.mode = mode  # parallel, serial, validator
         self.status = "Pending"
         self.log_file = f"logs/{name.lower().replace(' ', '_')}.log"
         self.last_log = ""
@@ -91,10 +92,17 @@ class SubAgentRunner:
 def generate_table(runners):
     table = Table(title="Antigravity Sub-Agents Orchestrator", expand=True)
     table.add_column("Agent", style="bold white")
+    table.add_column("Mode", style="cyan")
     table.add_column("Status", style="dim")
     table.add_column("Latest Activity", style="italic")
 
+    current_mode = None
     for runner in runners:
+        # Add section separator if mode changes (optional visual enhancement)
+        if current_mode is not None and current_mode != runner.mode:
+             table.add_section()
+        current_mode = runner.mode
+
         status_style = "green" if runner.status == "Completed" else "yellow" if runner.status == "Running" else "red" if "Error" in runner.status else "white"
         
         # Add spinner if running
@@ -105,7 +113,8 @@ def generate_table(runners):
             status_text = f"✅ {runner.status}"
             
         table.add_row(
-            f"[{runner.color}]{runner.name}[/{runner.color}]", 
+            f"[{runner.color}]{runner.name}[/{runner.color}]",
+            runner.mode,
             f"[{status_style}]{status_text}[/{status_style}]", 
             runner.last_log[-50:] if len(runner.last_log) > 50 else runner.last_log
         )
@@ -139,38 +148,47 @@ def main():
     manus_context += "Instructions: You must read the shared state above. Update 'findings.md' with new discoveries and 'progress.md' with your status using <<WRITE_FILE>>."
 
     runners = []
-    normal_runners = []
+    parallel_runners = []
+    serial_runners = []
     validator_runners = []
 
     for agent_cfg in config.get('subagents', []):
         # Inject Manus Context into prompt
         full_prompt = agent_cfg['prompt'] + manus_context
         
+        name = agent_cfg['name']
+        mode = agent_cfg.get('mode', 'parallel')
+        
+        # Enforce Validator mode
+        if name == 'Quality_Validator':
+            mode = 'validator'
+            
         runner = SubAgentRunner(
-            agent_cfg['name'], 
+            name, 
             full_prompt, 
             agent_cfg.get('color', 'white'),
-            agent_cfg.get('model', 'auto-gemini-3')
+            agent_cfg.get('model', 'auto-gemini-3'),
+            mode
         )
-        runners.append(runner)
-
-        if agent_cfg['name'] == 'Quality_Validator':
+        
+        if mode == 'validator':
             validator_runners.append(runner)
+        elif mode == 'serial':
+            serial_runners.append(runner)
         else:
-            normal_runners.append(runner)
+            parallel_runners.append(runner) # parallel default
+
+    # Sort runners for display: Parallel -> Serial -> Validator
+    runners = parallel_runners + serial_runners + validator_runners
 
     # Plan Mode: Show summary before running
     print("\n[Orchestrator] Team Plan:")
-    print(f"{'Name':<20} {'Model':<20} {'Color':<10} {'Type':<10}")
+    print(f"{'Name':<20} {'Model':<20} {'Color':<10} {'Mode':<10}")
     print("-" * 65)
     for runner in runners:
-        r_type = "Validator" if runner in validator_runners else "Worker"
-        print(f"{runner.name:<20} {runner.model:<20} {runner.color:<10} {r_type:<10}")
+        print(f"{runner.name:<20} {runner.model:<20} {runner.color:<10} {runner.mode:<10}")
     print("-" * 65)
-    print(f"[Orchestrator] Context Injection: Included {len(manus_context)} bytes of shared state (task_plan, findings, progress).")
-    
-    if validator_runners:
-        print(f"[Orchestrator] Policy: {len(validator_runners)} 'Quality_Validator' agent(s) will run sequentially AFTER others finish.")
+    print(f"[Orchestrator] Phases: Parallel({len(parallel_runners)}) -> Serial({len(serial_runners)}) -> Validator({len(validator_runners)})")
 
     if "--yes" not in sys.argv:
         try:
@@ -186,29 +204,37 @@ def main():
 
     console = Console()
     
-    # Note: We keep a reference to threads to join if needed, but we rely on is_alive() loops
-    
     # Live UI
     with Live(generate_table(runners), refresh_per_second=4, console=console) as live:
         
-        # --- PHASE 1: WORKERS (Parallel) ---
-        normal_threads = []
-        for runner in normal_runners:
+        # --- PHASE 1: PARALLEL WORKERS ---
+        parallel_threads = []
+        for runner in parallel_runners:
             t = threading.Thread(target=runner.run)
             t.start()
-            normal_threads.append(t)
+            parallel_threads.append(t)
         
-        # Wait for all workers to finish
-        while any(t.is_alive() for t in normal_threads):
+        # Wait for all parallel workers to finish
+        while any(t.is_alive() for t in parallel_threads):
             live.update(generate_table(runners))
             time.sleep(0.25)
+
+        # --- PHASE 2: SERIAL WORKERS ---
+        for runner in serial_runners:
+            t = threading.Thread(target=runner.run)
+            t.start()
             
-        # --- PHASE 2: VALIDATORS (Sequential) ---
+            # Wait for this serial agent to finish
+            while t.is_alive():
+                live.update(generate_table(runners))
+                time.sleep(0.25)
+            
+        # --- PHASE 3: VALIDATORS ---
         for runner in validator_runners:
             t = threading.Thread(target=runner.run)
             t.start()
             
-            # Wait for this validator to finish before starting next (or finishing)
+            # Wait for this validator to finish
             while t.is_alive():
                 live.update(generate_table(runners))
                 time.sleep(0.25)

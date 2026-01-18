@@ -139,25 +139,38 @@ def main():
     manus_context += "Instructions: You must read the shared state above. Update 'findings.md' with new discoveries and 'progress.md' with your status using <<WRITE_FILE>>."
 
     runners = []
+    normal_runners = []
+    validator_runners = []
+
     for agent_cfg in config.get('subagents', []):
         # Inject Manus Context into prompt
         full_prompt = agent_cfg['prompt'] + manus_context
         
-        runners.append(SubAgentRunner(
+        runner = SubAgentRunner(
             agent_cfg['name'], 
             full_prompt, 
             agent_cfg.get('color', 'white'),
             agent_cfg.get('model', 'auto-gemini-3')
-        ))
+        )
+        runners.append(runner)
+
+        if agent_cfg['name'] == 'Quality_Validator':
+            validator_runners.append(runner)
+        else:
+            normal_runners.append(runner)
 
     # Plan Mode: Show summary before running
     print("\n[Orchestrator] Team Plan:")
-    print(f"{'Name':<20} {'Model':<20} {'Color':<10}")
-    print("-" * 50)
+    print(f"{'Name':<20} {'Model':<20} {'Color':<10} {'Type':<10}")
+    print("-" * 65)
     for runner in runners:
-        print(f"{runner.name:<20} {runner.model:<20} {runner.color:<10}")
-    print("-" * 50)
+        r_type = "Validator" if runner in validator_runners else "Worker"
+        print(f"{runner.name:<20} {runner.model:<20} {runner.color:<10} {r_type:<10}")
+    print("-" * 65)
     print(f"[Orchestrator] Context Injection: Included {len(manus_context)} bytes of shared state (task_plan, findings, progress).")
+    
+    if validator_runners:
+        print(f"[Orchestrator] Policy: {len(validator_runners)} 'Quality_Validator' agent(s) will run sequentially AFTER others finish.")
 
     if "--yes" not in sys.argv:
         try:
@@ -173,22 +186,36 @@ def main():
 
     console = Console()
     
-    # Start threads
-    threads = []
-    for runner in runners:
-        t = threading.Thread(target=runner.run)
-        t.start()
-        threads.append(t)
-
+    # Note: We keep a reference to threads to join if needed, but we rely on is_alive() loops
+    
     # Live UI
     with Live(generate_table(runners), refresh_per_second=4, console=console) as live:
-        while any(t.is_alive() for t in threads):
+        
+        # --- PHASE 1: WORKERS (Parallel) ---
+        normal_threads = []
+        for runner in normal_runners:
+            t = threading.Thread(target=runner.run)
+            t.start()
+            normal_threads.append(t)
+        
+        # Wait for all workers to finish
+        while any(t.is_alive() for t in normal_threads):
             live.update(generate_table(runners))
             time.sleep(0.25)
+            
+        # --- PHASE 2: VALIDATORS (Sequential) ---
+        for runner in validator_runners:
+            t = threading.Thread(target=runner.run)
+            t.start()
+            
+            # Wait for this validator to finish before starting next (or finishing)
+            while t.is_alive():
+                live.update(generate_table(runners))
+                time.sleep(0.25)
         
         # Final update
         live.update(generate_table(runners))
- 
+
     print("\nAll agents have finished.")
 
 if __name__ == "__main__":

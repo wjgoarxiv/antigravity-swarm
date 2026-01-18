@@ -2,7 +2,7 @@ subagents:
   - name: "Lead_Developer"
     description: "Responsible for HTML structure and JavaScript logic."
     color: "cyan"
-    model: "gemini-3-flash-preview"
+    model: "auto-gemini-3"
     prompt: |
       You are an expert Frontend Developer. Your goal is to build the core structure and functionality of a minimal Todo List application.
       
@@ -16,7 +16,7 @@ subagents:
   - name: "UI_Specialist"
     description: "Responsible for visual styling and UX."
     color: "magenta"
-    model: "gemini-3-flash-preview"
+    model: "auto-gemini-3"
     prompt: |
       You are a Minimalist UI Designer and CSS Expert. Your goal is to make the Todo List look beautiful and modern.
       
@@ -29,7 +29,7 @@ subagents:
   - name: "QA_Engineer"
     description: "Responsible for validation and final assembly."
     color: "green"
-    model: "gemini-3-flash-preview"
+    model: "auto-gemini-3"
     prompt: |
       You are a QA Engineer and Release Manager.
       
@@ -43,7 +43,7 @@ subagents:
   - name: "Backend_Architect"
     description: "Specialist in Python/FastAPI server-side logic."
     color: "blue"
-    model: "gemini-3-flash-preview"
+    model: "auto-gemini-3"
     prompt: |
     You are a Senior Backend Architect specializing in Python and FastAPI.
     Responsibilities:
@@ -55,7 +55,7 @@ subagents:
   - name: "Database_Specialist"
     description: "Expert in SQL, schema design, and ORMs."
     color: "yellow"
-    model: "gemini-3-flash-preview"
+    model: "auto-gemini-3"
     prompt: |
       You are a Database Specialist.
       Responsibilities:
@@ -67,7 +67,7 @@ subagents:
   - name: "React_Frontend_Dev"
     description: "Expert in modern React, Hooks, and State Management."
     color: "cyan"
-    model: "gemini-3-flash-preview"
+    model: "auto-gemini-3"
     prompt: |
       You are a Senior React Developer.
       Responsibilities:
@@ -79,7 +79,7 @@ subagents:
   - name: "DevOps_Engineer"
     description: "Handles Docker, CI/CD, and Deployment."
     color: "red"
-    model: "gemini-3-flash-preview"
+    model: "auto-gemini-3"
     prompt: |
       You are a DevOps Engineer.
       Responsibilities:
@@ -91,7 +91,7 @@ subagents:
   - name: "Security_Auditor"
     description: "Focuses on code safety, vulnerabilities, and auth."
     color: "magenta"
-    model: "gemini-3-flash-preview"
+    model: "auto-gemini-3"
     prompt: |
       You are a Security Auditor.
       Responsibilities:
@@ -103,7 +103,7 @@ subagents:
   - name: "Technical_Writer"
     description: "Creates comprehensive documentation and READMEs."
     color: "white"
-    model: "gemini-3-flash-preview"
+    model: "auto-gemini-3"
     prompt: |
       You are a Technical Writer.
       Responsibilities:
@@ -115,7 +115,7 @@ subagents:
   - name: "Data_Analyst"
     description: "Python Pandas/NumPy expert for data processing."
     color: "green"
-    model: "gemini-3-flash-preview"
+    model: "auto-gemini-3"
     prompt: |
       You are a Data Analyst.
       Responsibilities:
@@ -127,7 +127,7 @@ subagents:
   - name: "QA_Automation"
     description: "Writes automated E2E and integration tests."
     color: "yellow"
-    model: "gemini-3-flash-preview"
+    model: "auto-gemini-3"
     prompt: |
       You are a QA Automation Engineer.
       Responsibilities:
@@ -139,7 +139,7 @@ subagents:
   - name: "Legacy_Refactorer"
     description: "Specialises in modernising old codebases."
     color: "blue"
-    model: "gemini-3-flash-preview"
+    model: "auto-gemini-3"
     prompt: |
       You are a Refactoring Specialist.
       Responsibilities:
@@ -151,7 +151,7 @@ subagents:
   - name: "API_Integrator"
     description: "Connects internal logic with external APIs (Stripe, OpenAI, etc)."
     color: "cyan"
-    model: "gemini-3-flash-preview"
+    model: "auto-gemini-3"
     prompt: |
       You are an API Integration Specialist.
       Responsibilities:
@@ -163,7 +163,7 @@ subagents:
   - name: "Mobile_Developer"
     description: "Builds cross-platform mobile apps (React Native/Flutter)."
     color: "magenta"
-    model: "gemini-3-flash-preview"
+    model: "auto-gemini-3"
     prompt: |
       You are a Mobile Developer.
       Responsibilities:
@@ -175,7 +175,7 @@ subagents:
   - name: "Systems_Architect"
     description: "High-level system design and component interaction."
     color: "white"
-    model: "gemini-3-flash-preview"
+    model: "auto-gemini-3"
     prompt: |
       You are a Systems Architect.
       Responsibilities:
@@ -187,7 +187,7 @@ subagents:
   - name: "Algorithm_Engineer"
     description: "Optimises complex logic and computational efficiency."
     color: "red"
-    model: "gemini-3-flash-preview"
+    model: "auto-gemini-3"
     prompt: |
       You are an Algorithm Engineer.
       Responsibilities:
@@ -199,7 +199,7 @@ subagents:
   - name: "Cloud_Infra_Eng"
     description: "Manages AWS/Azure/GCP resources via Terraform/Pulumi."
     color: "blue"
-    model: "gemini-3-flash-preview"
+    model: "auto-gemini-3"
     prompt: |
       You are a Cloud Infrastructure Engineer.
       Responsibilities:
@@ -211,7 +211,7 @@ subagents:
   - name: "Localization_Specialist"
     description: "Handles i18n, translation, and cultural adaptation."
     color: "green"
-    model: "gemini-3-flash-preview"
+    model: "auto-gemini-3"
     prompt: |
       You are a Localization (i18n) Specialist.
       Responsibilities:
@@ -223,7 +223,7 @@ subagents:
   - name: "Prompt_Engineer"
     description: "Optimises System Prompts for AI agents."
     color: "magenta"
-    model: "gemini-3-flash-preview"
+    model: "auto-gemini-3"
     prompt: |
       You are a Prompt Engineer.
       Responsibilities:
@@ -235,7 +235,7 @@ subagents:
   - name: "Scripting_Expert"
     description: "Automates tasks with Bash/Shell/Python scripts."
     color: "yellow"
-    model: "gemini-3-flash-preview"
+    model: "auto-gemini-3"
     prompt: |
       You are a Scripting Expert.
       Responsibilities:
@@ -247,7 +247,7 @@ subagents:
   - name: "Accessibility_Auditor"
     description: "Ensures WCAG compliance and inclusive design."
     color: "cyan"
-    model: "gemini-3-flash-preview"
+    model: "auto-gemini-3"
     prompt: |
       You are an Accessibility (a11y) Auditor.
       Responsibilities:
@@ -259,7 +259,7 @@ subagents:
   - name: "Code_Reviewer"
     description: "Enforces coding standards and best practices."
     color: "white"
-    model: "gemini-3-flash-preview"
+    model: "auto-gemini-3"
     prompt: |
       You are a Senior Code Reviewer.
       Responsibilities:
@@ -271,7 +271,7 @@ subagents:
   - name: "Research_Assistant"
     description: "Synthesizes information and summarizes documents."
     color: "blue"
-    model: "gemini-3-flash-preview"
+    model: "auto-gemini-3"
     prompt: |
       You are a Research Assistant.
       Responsibilities:

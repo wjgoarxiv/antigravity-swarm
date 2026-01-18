@@ -8,6 +8,9 @@
 > 2026년 1월 18일 기준, Gemini CLI나 Antigravity IDE에는 서브에이전트를 배포할 수 있는 **네이티브 기능이 존재하지 않습니다.**
 > 이 스킬은 그 공백을 메워, 여러분의 개발 환경에서 진정한 병렬 에이전트 오케스트레이션을 가능하게 합니다.
 
+> [!NOTE] > **Windows 호환성 (Windows Compatibility)**
+> 이 스킬은 Windows PowerShell 환경(CP949/한국어 로케일)을 완벽하게 지원합니다. 모든 입출력 작업에 UTF-8 인코딩을 강제하여 인코딩 오류를 방지했습니다.
+
 ---
 
 ## 왜 이 스킬을 사용해야 하나요?
@@ -87,6 +90,11 @@ IDE에서 Gemini Agent와 대화하던 중, 복잡한 작업을 에이전트가 
 2.  내부적으로 `planner.py`를 호출하여 팀을 설계합니다.
 3.  `orchestrator.py`를 호출하여 작업을 실행합니다.
 4.  Validator가 검증한 최종 결과를 사용자에게 보고합니다.
+
+### 📜 설정 예시 (Example Configuration)
+
+`GEMINI.md` 또는 `AGENTS.md`에 이 스킬을 통합하는 전체 예시는 다음 파일을 참조하세요:
+[GEMINI_example.md](GEMINI_example.md)
 
 ---
 

@@ -8,6 +8,9 @@ This skill allows you to spawn multiple specialized AI agents (Sub-Agents) to wo
 > As of 2026-01-18, **there is NO native method** to deploy sub-agents in Gemini CLI or the Antigravity IDE.
 > This skill bridges that gap, unlocking true parallel agent orchestration for your environment.
 
+> [!NOTE] > **Windows Compatibility**
+> This skill includes native support for Windows PowerShell environments (CP949/Korean locale) by enforcing UTF-8 encoding for all I/O operations.
+
 ---
 
 ## Why use this?
@@ -87,6 +90,11 @@ If you have integrated this skill into `~/.gemini/GEMINI.md`, the Main Agent wil
 2.  It calls `planner.py` internally to design a team.
 3.  It calls `orchestrator.py` to execute the work.
 4.  It presents the final result (verified by the Validator) to you.
+
+### 📜 Example Configuration
+
+For a complete example of how to integrate this skill into your `GEMINI.md` or `AGENTS.md`, please refer to:
+[GEMINI_example.md](GEMINI_example.md)
 
 ---
 

@@ -92,7 +92,7 @@ def main():
             # Remove the flag and value from args so the rest is the task
             del args[idx:idx+2]
 
-    model_name = "gemini-3-flash-preview" # Default
+    model_name = "gemini-3-flash" # Default
     if "--model" in args:
         idx = args.index("--model")
         if idx + 1 < len(args):

@@ -87,7 +87,7 @@ run_command("python3 scripts/orchestrator.py")
 ```
 
 > [!WARNING]
-> You must use `gemini-3-pro-preview` or `gemini-3-flash-preview`. Deprecated or older models may not support the file shim protocol correctly.
+> You must use `gemini-3-pro` or `gemini-3-flash`. Deprecated or older models may not support the file shim protocol correctly.
 
 ## ❓ FAQ & Philosophy
 

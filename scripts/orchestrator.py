@@ -134,7 +134,7 @@ def main():
             agent_cfg['name'], 
             full_prompt, 
             agent_cfg.get('color', 'white'),
-            agent_cfg.get('model', 'gemini-3-flash-preview')
+            agent_cfg.get('model', 'gemini-3-flash')
         ))
 
     # Plan Mode: Show summary before running

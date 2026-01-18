@@ -31,8 +31,8 @@ Rules for hiring:
 2. For each role, define a clear, specialized system prompt.
 3. Assign a unique color (green, yellow, blue, magenta, cyan, red) to each agent.
 4. Assign a suitable model:
-   - Use 'gemini-3-flash-preview' for standard tasks, speed, and coding.
-   - Use 'gemini-3-pro-preview' for complex reasoning or creative writing.
+   - Use 'gemini-3-flash' for standard tasks, speed, and coding.
+   - Use 'gemini-3-pro' for complex reasoning or creative writing.
 5. [CRITICAL] The FINAL agent in the list MUST be a 'Quality_Validator'.
    - Role: Verify all work done by previous agents.
    - Responsibilities: Check file existence, validate code syntax (if applicable), and ensure the mission goal is met.
@@ -89,6 +89,16 @@ def main():
         
         if yaml_match:
             yaml_content = yaml_match.group(1)
+            
+            # --- HOTFIX: Enforce Working Model ---
+            # The user's environment uses "auto-gemini-3" (resolves to 2.0-flash-thinking).
+            # We strictly enforce this alias to prevent 404s on "gemini-3-flash" or "gemini-2.0".
+            if "gemini-2.0" in yaml_content or "gemini-1.5" in yaml_content or "gemini-3-flash" in yaml_content:
+                print("[Planner] [WARN] Validating model availability. Switching to 'auto-gemini-3' (system default)...")
+                yaml_content = re.sub(r"gemini-\d+\.\d+[-\w]*", "auto-gemini-3", yaml_content)
+                yaml_content = re.sub(r"gemini-3-flash", "auto-gemini-3", yaml_content)
+            # ----------------------------------
+
             plan_content = plan_match.group(1).strip() if plan_match else "# Task Plan (Auto-Generated)\n- [ ] Review Mission"
             
             # Plan Mode (Confirmation)
@@ -130,8 +140,10 @@ def main():
             print("[Planner] Ready to execute. Run 'python3 scripts/orchestrator.py' to start.")
         else:
             print("[Planner] Error: Could not parse YAML from agent output.")
-            print("--- Raw Output ---")
+            print("--- Raw Output (STDOUT) ---")
             print(output)
+            print("--- Error Output (STDERR) ---")
+            print(process.stderr)
             sys.exit(1)
 
     except Exception as e:

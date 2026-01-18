@@ -31,8 +31,8 @@ Rules for hiring:
 2. For each role, define a clear, specialized system prompt.
 3. Assign a unique color (green, yellow, blue, magenta, cyan, red) to each agent.
 4. Assign a suitable model:
-   - Use 'gemini-3-flash' for standard tasks, speed, and coding.
-   - Use 'gemini-3-pro' for complex reasoning or creative writing.
+   - Use 'auto-gemini-3' for standard tasks, speed, and coding.
+   - Use 'auto-gemini-3' for complex reasoning or creative writing.
 5. [CRITICAL] The FINAL agent in the list MUST be a 'Quality_Validator'.
    - Role: Verify all work done by previous agents.
    - Responsibilities: Check file existence, validate code syntax (if applicable), and ensure the mission goal is met.

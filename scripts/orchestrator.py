@@ -18,7 +18,7 @@ SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 DISPATCH_SCRIPT = os.path.join(SCRIPT_DIR, "dispatch_agent.py")
 
 class SubAgentRunner:
-    def __init__(self, name, prompt, color, model="gemini-3.0-flash"):
+    def __init__(self, name, prompt, color, model="auto-gemini-3"):
         self.name = name
         self.prompt = prompt
         self.color = color
@@ -27,6 +27,7 @@ class SubAgentRunner:
         self.log_file = f"logs/{name.lower().replace(' ', '_')}.log"
         self.last_log = ""
         self.is_running = False
+        self.log_handle = None
         
         # Ensure log dir exists
         os.makedirs("logs", exist_ok=True)
@@ -54,28 +55,36 @@ class SubAgentRunner:
             
             while self.process.poll() is None:
                 # Update last log line
-                self._read_last_log()
+                self._read_new_logs()
                 time.sleep(0.1)
                 
             self.status = "Completed" if self.process.returncode == 0 else "Failed"
-            self._read_last_log() # Final read
+            self._read_new_logs() # Final read
             
         except Exception as e:
             self.status = f"Error: {str(e)}"
         finally:
             self.is_running = False
+            if self.log_handle:
+                self.log_handle.close()
 
-    def _read_last_log(self):
-        if os.path.exists(self.log_file):
+    def _read_new_logs(self):
+        # Open handle if not already open
+        if not self.log_handle:
+            if os.path.exists(self.log_file):
+                try:
+                    self.log_handle = open(self.log_file, 'r', encoding='utf-8', errors='replace')
+                except:
+                    pass
+        
+        # Read available lines
+        if self.log_handle:
             try:
-                with open(self.log_file, 'rb') as f:
-                    try:
-                        f.seek(-100, os.SEEK_END) # Read last 100 bytes
-                    except IOError: 
-                        pass # File too small
-                    lines = f.readlines()
-                    if lines:
-                        self.last_log = lines[-1].decode('utf-8', errors='replace').strip()
+                lines = self.log_handle.readlines()
+                if lines:
+                    last_line = lines[-1].strip()
+                    if last_line:
+                        self.last_log = last_line
             except:
                 pass
 
@@ -138,7 +147,7 @@ def main():
             agent_cfg['name'], 
             full_prompt, 
             agent_cfg.get('color', 'white'),
-            agent_cfg.get('model', 'gemini-3-flash')
+            agent_cfg.get('model', 'auto-gemini-3')
         ))
 
     # Plan Mode: Show summary before running

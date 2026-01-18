@@ -96,7 +96,7 @@ def main():
             # Remove the flag and value from args so the rest is the task
             del args[idx:idx+2]
 
-    model_name = "gemini-3-flash" # Default
+    model_name = "auto-gemini-3" # Default
     if "--model" in args:
         idx = args.index("--model")
         if idx + 1 < len(args):
@@ -129,20 +129,29 @@ def main():
 
     full_prompt = f"{shim_instruction}{task}"
     
+    log_file_handle = None
+    if log_file:
+        try:
+            # Ensure directory exists
+            os.makedirs(os.path.dirname(os.path.abspath(log_file)), exist_ok=True)
+            log_file_handle = open(log_file, 'a', encoding='utf-8')
+        except Exception as e:
+            print(f"[Shim] Warning: Could not open log file: {e}")
+
     def log_message(msg_type, content):
-        if not log_file: return
+        if not log_file_handle: return
         
         try:
-            with open(log_file, 'a', encoding='utf-8') as f:
-                if log_format == "json":
-                    entry = {
-                        "timestamp": time.time(),
-                        "type": msg_type,
-                        "content": content
-                    }
-                    f.write(json.dumps(entry) + "\n")
-                else:
-                    f.write(f"[{msg_type.upper()}] {content}\n")
+            if log_format == "json":
+                entry = {
+                    "timestamp": time.time(),
+                    "type": msg_type,
+                    "content": content
+                }
+                log_file_handle.write(json.dumps(entry) + "\n")
+            else:
+                log_file_handle.write(f"[{msg_type.upper()}] {content}\n")
+            log_file_handle.flush()
         except Exception as e:
             print(f"[Shim] Warning: Could not write to log: {e}")
 
@@ -182,6 +191,10 @@ def main():
              log_message("status", "failed")
              stderr = process.stderr.read()
              log_message("error", stderr)
+             sys.exit(process.returncode)
+
+        if log_file_handle:
+            log_file_handle.close()
 
     except Exception as e:
         print(f"Error dispatching agent: {e}")

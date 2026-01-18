@@ -55,6 +55,10 @@ Do not include any other text outside the YAML block.
 """
 
 def main():
+    # Fix for Windows CP949 encoding issue
+    if hasattr(sys.stdout, 'reconfigure'):
+        sys.stdout.reconfigure(encoding='utf-8')
+
     if len(sys.argv) < 2:
         print("Usage: python3 scripts/planner.py <mission_description>")
         sys.exit(1)
@@ -76,7 +80,8 @@ def main():
         process = subprocess.run(
             [gemini_path, "chat", full_prompt],
             capture_output=True,
-            text=True
+            text=True,
+            encoding='utf-8'
         )
         
         output = process.stdout
@@ -120,19 +125,19 @@ def main():
                     sys.exit(0)
 
             # Save artifacts
-            with open(CONFIG_FILE, 'w') as f:
+            with open(CONFIG_FILE, 'w', encoding='utf-8') as f:
                 f.write(yaml_content)
             
-            with open("task_plan.md", 'w') as f:
+            with open("task_plan.md", 'w', encoding='utf-8') as f:
                 f.write(plan_content)
                 
             # Initialize other Manus Protocol files if they don't exist
             if not os.path.exists("findings.md"):
-                with open("findings.md", 'w') as f:
+                with open("findings.md", 'w', encoding='utf-8') as f:
                     f.write("# Findings & Scratchpad\n\nUse this file to store shared knowledge, research notes, and intermediate outputs.")
             
             if not os.path.exists("progress.md"):
-                with open("progress.md", 'w') as f:
+                with open("progress.md", 'w', encoding='utf-8') as f:
                     f.write(f"# Mission Progress\n\nMission: {mission}\n\n## Status Log\n")
 
             print(f"[Planner] Configuration saved to {CONFIG_FILE}.")

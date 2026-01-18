@@ -75,7 +75,7 @@ class SubAgentRunner:
                         pass # File too small
                     lines = f.readlines()
                     if lines:
-                        self.last_log = lines[-1].decode(errors='replace').strip()
+                        self.last_log = lines[-1].decode('utf-8', errors='replace').strip()
             except:
                 pass
 
@@ -103,23 +103,27 @@ def generate_table(runners):
     return table
 
 def main():
+    # Fix for Windows CP949 encoding issue
+    if hasattr(sys.stdout, 'reconfigure'):
+        sys.stdout.reconfigure(encoding='utf-8')
+
     if not os.path.exists(CONFIG_FILE):
         print(f"Error: {CONFIG_FILE} not found.")
         return
 
-    with open(CONFIG_FILE, 'r') as f:
+    with open(CONFIG_FILE, 'r', encoding='utf-8') as f:
         config = yaml.safe_load(f)
 
     # Manus Protocol: Context Injection
     manus_context = "\n\n[SHARED STATE]"
     if os.path.exists("task_plan.md"):
-        with open("task_plan.md", 'r') as f:
+        with open("task_plan.md", 'r', encoding='utf-8') as f:
             manus_context += f"\n--- task_plan.md ---\n{f.read()}"
     if os.path.exists("findings.md"):
-        with open("findings.md", 'r') as f:
+        with open("findings.md", 'r', encoding='utf-8') as f:
             manus_context += f"\n--- findings.md ---\n{f.read()}"
     if os.path.exists("progress.md"):
-        with open("progress.md", 'r') as f:
+        with open("progress.md", 'r', encoding='utf-8') as f:
             manus_context += f"\n--- progress.md ---\n{f.read()}"
     
     manus_context += "\n[END SHARED STATE]\n"

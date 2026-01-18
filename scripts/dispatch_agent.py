@@ -35,7 +35,7 @@ def parse_and_execute_side_effects(output):
         try:
             # Ensure directory exists
             os.makedirs(os.path.dirname(os.path.abspath(path)), exist_ok=True)
-            with open(path, 'w') as f:
+            with open(path, 'w', encoding='utf-8') as f:
                 f.write(content)
             print(f"[Shim] Successfully wrote to {path}")
         except Exception as e:
@@ -71,6 +71,10 @@ def get_gemini_path():
     return None
 
 def main():
+    # Fix for Windows CP949 encoding issue
+    if hasattr(sys.stdout, 'reconfigure'):
+        sys.stdout.reconfigure(encoding='utf-8')
+
     if len(sys.argv) < 2:
         print("Usage: python3 dispatch_agent.py <task_description> [--log-file <path>]")
         sys.exit(1)
@@ -129,7 +133,7 @@ def main():
         if not log_file: return
         
         try:
-            with open(log_file, 'a') as f:
+            with open(log_file, 'a', encoding='utf-8') as f:
                 if log_format == "json":
                     entry = {
                         "timestamp": time.time(),
@@ -154,7 +158,8 @@ def main():
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,
-            bufsize=1
+            bufsize=1,
+            encoding='utf-8'
         )
         
         stdout_acc = ""

@@ -5,11 +5,16 @@
 This skill allows you to spawn multiple specialized AI agents (Sub-Agents) to work on complex tasks in parallel. Whether you are using the terminal or the Antigravity IDE, this tool orchestrates a team of experts—Architects, Engineers, and Validators—to solve your problems efficiently.
 
 > [!IMPORTANT] > **Why do you need this?**
-> As of 2026-01-18, **there is NO native method** to deploy sub-agents in Gemini CLI or the Antigravity IDE.
+> As of 2026-01-31, **there is NO native method** to deploy sub-agents in Gemini CLI or the Antigravity IDE.
 > This skill bridges that gap, unlocking true parallel agent orchestration for your environment.
 
 > [!NOTE] > **Windows Compatibility**
 > This skill includes native support for Windows PowerShell environments (CP949/Korean locale) by enforcing UTF-8 encoding for all I/O operations.
+
+> [!WARNING]
+> **Do NOT modify files in this directory while the Orchestrator is running.**
+> The system actively reads and writes to `task_plan.md`, `findings.md`, and `subagents.yaml`.
+> Manual edits during execution may cause race conditions or inconsistent agent behavior.
 
 ---
 
@@ -84,17 +89,17 @@ The Planner automatically selects the best experts for your mission from this po
 
 | Role | Expertise | Model |
 |------|-----------|-------|
-| **Oracle** | Architecture, Deep Debugging, Root Cause Analysis | Opus (gemini-3-pro) |
-| **Librarian** | Documentation, Code Structure, Research | Sonnet (gemini-3-flash) |
-| **Explore** | Fast Search, Pattern Matching, Reconnaissance | Haiku (gemini-3-flash) |
-| **Frontend** | UI/UX, Styling, Accessibility | Sonnet (gemini-3-flash) |
-| **Multimodal** | Vision Analysis, Mockups | Sonnet (gemini-3-pro) |
-| **Doc_Writer** | READMEs, API Docs, Comments | Haiku (gemini-3-flash) |
-| **Prometheus** | Strategic Planning, Requirements Gathering | Opus (gemini-3-pro) |
-| **Momus** | Critical Review, Risk Identification | Opus (gemini-3-pro) |
-| **Sisyphus** | Task Coordination, Delegation (PM) | Sonnet (gemini-3-flash) |
-| **Junior** | Implementation, Coding, Bug Fixing | Sonnet (gemini-3-flash) |
-| **Quality_Validator** | Final Verification & Testing (Mandatory) | Sonnet (gemini-3-flash) |
+| **Oracle** | Architecture, Deep Debugging, Root Cause Analysis | gemini-3-pro |
+| **Librarian** | Documentation, Code Structure, Research | gemini-3-flash |
+| **Explore** | Fast Search, Pattern Matching, Reconnaissance | gemini-3-flash |
+| **Frontend** | UI/UX, Styling, Accessibility | gemini-3-flash |
+| **Multimodal** | Vision Analysis, Mockups | gemini-3-pro |
+| **Doc_Writer** | READMEs, API Docs, Comments | gemini-3-flash |
+| **Prometheus** | Strategic Planning, Requirements Gathering | gemini-3-pro |
+| **Momus** | Critical Review, Risk Identification | gemini-3-pro |
+| **Sisyphus** | Task Coordination, Delegation (PM) | gemini-3-flash |
+| **Junior** | Implementation, Coding, Bug Fixing | gemini-3-flash |
+| **Quality_Validator** | Final Verification & Testing (Mandatory) | gemini-3-flash |
 
 ---
 
@@ -140,7 +145,7 @@ This project is heavily inspired by **[Oh-My-Opencode](https://github.com/code-y
 
 We have adopted its core philosophies:
 - **Multi-Agent Orchestration**: Using specialized roles (Oracle, Librarian, Sisyphus) for distinct tasks.
-- **The "Manus Protocol"**: Using persistent markdown files (`task_plan.md`, `findings.md`) for state management.
+- **The "Manus Protocol"**: Using persistent markdown files (`task_plan.md`, `findings.md`) for state management. This pattern is heavily inspired by **[planning-with-files](https://github.com/OthmanAdi/planning-with-files)**.
 - **Ultrawork Loop**: The autonomous "Plan -> Act -> Verify" cycle.
 
 Huge thanks to the original creators for defining these agent interaction patterns.

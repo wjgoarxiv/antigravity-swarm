@@ -9,6 +9,11 @@ This skill allows you to dispatch autonomous sub-agents to perform tasks.
 It features a **Manager** layer (`planner.py`) that can automatically design a team of agents for a complex mission, and an **Orchestrator** (`orchestrator.py`) to run them visually.
 Both scripts include a **Plan Mode** (confirmation step) by default to prevent accidental usage limits consumption.
 
+> [!WARNING]
+> **Do NOT modify files in this directory while the Orchestrator is running.**
+> The system actively reads and writes to `task_plan.md`, `findings.md`, and `subagents.yaml`.
+> Manual edits during execution may cause race conditions or inconsistent agent behavior.
+
 ## 🛠 Tools
 
 ### `dispatch_subagent`

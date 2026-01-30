@@ -41,9 +41,9 @@ This skill allows you to spawn multiple specialized AI agents (Sub-Agents) to wo
 
 ## User Manual
 
-There are two main ways to use this skill.
+There are three main ways to use this skill.
 
-### 🅰️ Scenario A: Gemini CLI (For Terminal Users)
+### 🅰️ Scenario A: Gemini CLI (Manual Mode)
 
 Use this when you want to manually "hire" a team to do a job for you from your terminal.
 
@@ -55,12 +55,7 @@ python3 scripts/planner.py "Create a Snake game with a green background and scor
 ```
 
 **Step 2: Review the Plan**
-The Planner will:
-
-1.  Analyze your request.
-2.  Propose a team (e.g., `Game_Designer`, `Python_Dev`, `Quality_Validator`).
-3.  Draft a `task_plan.md`.
-4.  Ask for your confirmation: `[Plan Mode] Save this configuration? [y/N]` -> Type `y`.
+The Planner will propose a team from the **Available Agent Pool** (see below) and draft a `task_plan.md`.
 
 **Step 3: Execute (Orchestrate)**
 Once approved, launch the team:
@@ -69,32 +64,37 @@ Once approved, launch the team:
 python3 scripts/orchestrator.py
 ```
 
-_You will see a Dashboard (TUI) showing all agents working in parallel._
+### 🅱️ Scenario B: Ultrawork Loop (Autonomous Mode)
+
+Use this for "set and forget" operations. The system will Plan -> Act -> Verify -> Fix in a loop until the mission succeeds.
+
+```bash
+python3 scripts/ultrawork_loop.py "Refactor the authentication module and add tests"
+```
+
+### 🆎 Scenario C: Antigravity IDE (Agent Integration)
+
+If integrated into `~/.gemini/GEMINI.md`, the Main Agent will **automatically** trigger this skill for complex tasks.
 
 ---
 
-### 🅱️ Scenario B: Antigravity IDE (For Agent Users)
+## Available Agent Roles (Oh-My-Opencode Standard)
 
-Use this when you are chatting with the Gemini Agent in the IDE and want it to handle a complex task autonomously.
+The Planner automatically selects the best experts for your mission from this pool:
 
-**How to Trigger:**
-If you have integrated this skill into `~/.gemini/GEMINI.md`, the Main Agent will **automatically** trigger this skill when:
-
-1.  The task involves editing **>3 files**.
-2.  The task requires **distinct expertise** (e.g., "I need a backend and a frontend").
-3.  The task allows for **parallel work**.
-
-**What happens?**
-
-1.  The Main Agent recognizes the complexity.
-2.  It calls `planner.py` internally to design a team.
-3.  It calls `orchestrator.py` to execute the work.
-4.  It presents the final result (verified by the Validator) to you.
-
-### 📜 Example Configuration
-
-For a complete example of how to integrate this skill into your `GEMINI.md` or `AGENTS.md`, please refer to:
-[GEMINI_example.md](GEMINI_example.md)
+| Role | Expertise | Model |
+|------|-----------|-------|
+| **Oracle** | Architecture, Deep Debugging, Root Cause Analysis | Opus (gemini-3-pro) |
+| **Librarian** | Documentation, Code Structure, Research | Sonnet (gemini-3-flash) |
+| **Explore** | Fast Search, Pattern Matching, Reconnaissance | Haiku (gemini-3-flash) |
+| **Frontend** | UI/UX, Styling, Accessibility | Sonnet (gemini-3-flash) |
+| **Multimodal** | Vision Analysis, Mockups | Sonnet (gemini-3-pro) |
+| **Doc_Writer** | READMEs, API Docs, Comments | Haiku (gemini-3-flash) |
+| **Prometheus** | Strategic Planning, Requirements Gathering | Opus (gemini-3-pro) |
+| **Momus** | Critical Review, Risk Identification | Opus (gemini-3-pro) |
+| **Sisyphus** | Task Coordination, Delegation (PM) | Sonnet (gemini-3-flash) |
+| **Junior** | Implementation, Coding, Bug Fixing | Sonnet (gemini-3-flash) |
+| **Quality_Validator** | Final Verification & Testing (Mandatory) | Sonnet (gemini-3-flash) |
 
 ---
 
@@ -125,8 +125,22 @@ antigravity-swarm/
 ├── scripts/
 │   ├── planner.py       # The "Hiring Manager" (Generates subagents.yaml)
 │   ├── orchestrator.py  # The "Project Manager" (Runs the agents)
-│   └── dispatch_agent.py # The "Worker" (Shim layer for Gemini CLI)
+│   ├── dispatch_agent.py # The "Worker" (Shim layer for Gemini CLI)
+│   └── ultrawork_loop.py # The "Autonomous Loop" (Plan -> Act -> Verify)
 ├── subagents.yaml       # The current team roster
 ├── task_plan.md         # Current mission status
 └── README.md            # This file
 ```
+
+---
+
+## ⭐️ Credits & Inspiration
+
+This project is heavily inspired by **[Oh-My-Opencode](https://github.com/code-yeongyu/oh-my-opencode)**.
+
+We have adopted its core philosophies:
+- **Multi-Agent Orchestration**: Using specialized roles (Oracle, Librarian, Sisyphus) for distinct tasks.
+- **The "Manus Protocol"**: Using persistent markdown files (`task_plan.md`, `findings.md`) for state management.
+- **Ultrawork Loop**: The autonomous "Plan -> Act -> Verify" cycle.
+
+Huge thanks to the original creators for defining these agent interaction patterns.

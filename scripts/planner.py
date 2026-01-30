@@ -1,11 +1,78 @@
 import sys
+#
+# Inspired by "Oh-My-Opencode" (https://github.com/code-yeongyu/oh-my-opencode)
+# Adopts the Agent Role definitions (Oracle, Librarian, etc.) and Planner logic.
+#
 import subprocess
 import re
 import os
-
 import shutil
 
 CONFIG_FILE = "subagents.yaml"
+
+# --- OH-MY-OPENCODE AGENT POOL ---
+AGENT_POOL = {
+    "Oracle": {
+        "description": "Complex debugging, architecture, root cause analysis.",
+        "color": "magenta",
+        "model": "auto-gemini-3", # Maps to Opus
+        "prompt": "You are Oracle. Your role is to provide deep architectural insights, debug complex issues, and find root causes. You do not write simple code; you solve hard problems."
+    },
+    "Librarian": {
+        "description": "Documentation search, code structure analysis, external research.",
+        "color": "blue",
+        "model": "auto-gemini-3", # Maps to Sonnet
+        "prompt": "You are Librarian. Your role is to read documentation, analyze the codebase structure, and find relevant examples. You provide the 'theory' and 'references' for the builders."
+    },
+    "Explore": {
+        "description": "Fast file search, pattern matching, reconnaissance.",
+        "color": "cyan",
+        "model": "auto-gemini-3", # Maps to Haiku
+        "prompt": "You are Explore. Your role is to quickly scan the codebase, find file paths, grep for patterns, and map out the territory. You are the scout."
+    },
+    "Frontend": {
+        "description": "UI components, styling, accessibility, frontend logic.",
+        "color": "green",
+        "model": "auto-gemini-3", # Maps to Sonnet
+        "prompt": "You are Frontend. Your role is to implement the user interface. You care about pixel-perfect design, accessibility, and smooth interactions."
+    },
+    "Doc_Writer": {
+        "description": "READMEs, API docs, comments.",
+        "color": "white",
+        "model": "auto-gemini-3", # Maps to Haiku
+        "prompt": "You are Doc_Writer. Your role is to document everything. You write clear, concise READMEs, API references, and inline comments."
+    },
+    "Prometheus": {
+        "description": "Strategic planning, requirements gathering.",
+        "color": "red",
+        "model": "auto-gemini-3", # Maps to Opus
+        "prompt": "You are Prometheus. Your role is to plan the strategy. You break down the mission into phases and identify risks."
+    },
+    "Momus": {
+        "description": "Critical review, feasibility check, risk identification.",
+        "color": "red",
+        "model": "auto-gemini-3", # Maps to Opus
+        "prompt": "You are Momus. Your role is to criticize the plan and code. You find flaws, security risks, and edge cases that others missed."
+    },
+    "Sisyphus": {
+        "description": "Task coordination, delegation, progress tracking.",
+        "color": "yellow",
+        "model": "auto-gemini-3", # Maps to Sonnet
+        "prompt": "You are Sisyphus (Sub-agent). Your role is to coordinate the smaller details of the task and keep track of progress."
+    },
+    "Junior": {
+        "description": "Concrete implementation, direct execution.",
+        "color": "yellow",
+        "model": "auto-gemini-3", # Maps to Sonnet
+        "prompt": "You are Junior. Your role is to do the work. You write the code, run the commands, and fix the bugs."
+    },
+    "Quality_Validator": {
+        "description": "Final QA, verification, testing.",
+        "color": "green",
+        "model": "auto-gemini-3", # Maps to Sonnet
+        "prompt": "You are Quality_Validator. Your role is to verify the work. You run tests, check files, and ensure the mission is complete. You are the final gatekeeper."
+    }
+}
 
 def get_gemini_path():
     # 1. Check env var
@@ -21,39 +88,54 @@ def get_gemini_path():
     return None
 
 def generate_prompt(mission):
+    # Construct the Agent Pool description string
+    pool_desc = ""
+    for name, info in AGENT_POOL.items():
+        pool_desc += f"- {name}: {info['description']} (Model: {info['model']})\n"
+
     return f"""
-You are a Principal Software Architect and Team Lead.
-Your goal is to hire a squad of specialized sub-agents to complete the following mission:
+You are Sisyphus, the Orchestrator and Principal Architect.
+Your goal is to hire a squad of specialized sub-agents from the **Oh-My-Opencode Agent Pool** to complete the following mission:
 "{mission}"
 
-Rules for hiring:
-1. Identify 2-5 distinct roles needed (e.g., specific coders, reviewers, designers).
-2. For each role, define a clear, specialized system prompt.
-3. Assign a unique color (green, yellow, blue, magenta, cyan, red) to each agent.
-4. Assign a suitable model:
-   - Use 'auto-gemini-3' for standard tasks, speed, and coding.
-   - Use 'auto-gemini-3' for complex reasoning or creative writing.
-5. [CRITICAL] The FINAL agent in the list MUST be a 'Quality_Validator'.
-   - Role: Verify all work done by previous agents.
-   - Responsibilities: Check file existence, validate code syntax (if applicable), and ensure the mission goal is met.
-6. Assign an execution mode:
-   - 'parallel' (default): For agents that can work simultaneously.
-   - 'serial': For agents that must wait for parallel tasks to finish (e.g., summarizers, aggregators).
-7. [CRITICAL] The FINAL agent must be 'Quality_Validator' (always runs last).
+**Available Agent Pool:**
+{pool_desc}
 
-Output Format:
-Please output ONE single YAML block enclosed in tripple backticks (```yaml).
+**Rules for Hiring:**
+1. Select 2-5 distinct roles from the Pool that best fit the mission.
+2. **You MUST use the exact names** from the pool (e.g., 'Oracle', 'Frontend', 'Librarian').
+3. **[CRITICAL]** The FINAL agent in the list MUST be 'Quality_Validator'.
+   - Role: Verify all work done by previous agents.
+   - Responsibilities: Check file existence, validate code syntax, and ensure the mission goal is met.
+4. Assign an execution mode:
+   - 'parallel' (default): For agents that can work simultaneously.
+   - 'serial': For agents that must wait for others (e.g., summarizers, aggregators).
+5. Use the specific prompts provided below for each role, but **customize them** slightly to fit the specific mission context.
+
+**Output Format:**
+Please output ONE single YAML block enclosed in triple backticks (```yaml).
 The YAML must follow this exact structure:
 
+```yaml
 subagents:
-  - name: "Agent-Name"
-    description: "Short description of role"
-    color: "color_name"
-    model: "gemini-model-name"
+  - name: "Oracle" # Must match pool name
+    description: "Specific role description for this mission"
+    color: "magenta" # Use pool color
+    model: "auto-gemini-3" # Use pool model
     mode: "parallel" # or "serial"
     prompt: |
-      You are [Role].
-      [Detailed instructions...]
+      You are Oracle.
+      [Specific instructions for this mission...]
+
+  - name: "Quality_Validator"
+    description: "Verifies the work"
+    color: "green"
+    model: "auto-gemini-3"
+    mode: "validator" # Enforced by orchestrator for this name
+    prompt: |
+      You are Quality_Validator.
+      [Specific verification instructions...]
+```
 
 Do not include any other text outside the YAML block.
 """
@@ -100,8 +182,7 @@ def main():
             yaml_content = yaml_match.group(1)
             
             # --- HOTFIX: Enforce Working Model ---
-            # The user's environment uses "auto-gemini-3" (resolves to 2.0-flash-thinking).
-            # We strictly enforce this alias to prevent 404s on "gemini-3-flash" or "gemini-2.0".
+            # We enforce 'auto-gemini-3' for compatibility
             if "gemini-2.0" in yaml_content or "gemini-1.5" in yaml_content or "gemini-3-flash" in yaml_content:
                 print("[Planner] [WARN] Validating model availability. Switching to 'auto-gemini-3' (system default)...")
                 yaml_content = re.sub(r"gemini-\d+\.\d+[-\w]*", "auto-gemini-3", yaml_content)

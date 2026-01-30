@@ -1,4 +1,8 @@
 import yaml
+#
+# Inspired by "Oh-My-Opencode" (https://github.com/code-yeongyu/oh-my-opencode)
+# Adopts the "Manus Protocol" for state management and TUI visualization.
+#
 import sys
 import subprocess
 import threading
@@ -127,7 +131,7 @@ def main():
 
     if not os.path.exists(CONFIG_FILE):
         print(f"Error: {CONFIG_FILE} not found.")
-        return
+        sys.exit(1)
 
     with open(CONFIG_FILE, 'r', encoding='utf-8') as f:
         config = yaml.safe_load(f)
@@ -243,6 +247,15 @@ def main():
         live.update(generate_table(runners))
 
     print("\nAll agents have finished.")
+    
+    # --- EXIT CODE CHECK ---
+    failed_agents = [r for r in runners if r.status != "Completed"]
+    if failed_agents:
+        print(f"\n[Orchestrator] Failure detected! The following agents failed: {', '.join([r.name for r in failed_agents])}")
+        sys.exit(1)
+    
+    print("[Orchestrator] Mission Accomplished.")
+    sys.exit(0)
 
 if __name__ == "__main__":
     main()

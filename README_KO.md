@@ -41,9 +41,9 @@
 
 ## 사용 가이드 (User Manual)
 
-이 스킬을 활용하는 두 가지 주요 방법이 있습니다.
+세 가지 주요 방법으로 이 스킬을 사용할 수 있습니다.
 
-### 🅰️ 시나리오 A: Gemini CLI (터미널 사용자용)
+### 🅰️ 시나리오 A: Gemini CLI (수동 모드)
 
 터미널에서 직접 팀을 "고용"하여 작업을 맡기고 싶을 때 사용하세요.
 
@@ -55,12 +55,7 @@ python3 scripts/planner.py "뱀 게임을 만들어줘. 배경은 초록색이�
 ```
 
 **Step 2: 계획 검토 (Review)**
-Planner는 다음 작업을 수행합니다:
-
-1.  요청 사항 분석.
-2.  최적의 팀 제안 (예: `Game_Designer`, `Python_Dev`, `Quality_Validator`).
-3.  `task_plan.md` 초안 작성.
-4.  사용자 확인 요청: `[Plan Mode] Save this configuration? [y/N]` -> `y` 입력.
+Planner는 **가능한 에이전트 역할(Available Agent Roles)** 풀에서 최적의 전문가를 선발하고 `task_plan.md`를 작성합니다.
 
 **Step 3: 실행 (Orchestrate)**
 승인 후, 팀을 출동시킵니다:
@@ -69,32 +64,37 @@ Planner는 다음 작업을 수행합니다:
 python3 scripts/orchestrator.py
 ```
 
-_터미널 대시보드(TUI)를 통해 모든 에이전트가 동시에 일하는 모습을 볼 수 있습니다._
+### 🅱️ 시나리오 B: Ultrawork Loop (자율 모드)
+
+"설정해두고 잊어버리는(Set and Forget)" 자율 작업을 위해 사용합니다. 시스템이 성공할 때까지 **Plan -> Act -> Verify -> Fix** 과정을 반복합니다.
+
+```bash
+python3 scripts/ultrawork_loop.py "인증 모듈을 리팩토링하고 테스트 코드를 추가해줘"
+```
+
+### 🆎 시나리오 C: Antigravity IDE (에이전트 연동)
+
+이 스킬이 `~/.gemini/GEMINI.md`에 통합되어 있다면, 메인 에이전트는 복잡한 작업에 대해 **자동으로** 이 스킬을 호출합니다.
 
 ---
 
-### 🅱️ 시나리오 B: Antigravity IDE (에이전트 사용자용)
+## 사용 가능한 에이전트 역할 (Oh-My-Opencode 표준)
 
-IDE에서 Gemini Agent와 대화하던 중, 복잡한 작업을 에이전트가 자율적으로 처리하길 원할 때 사용됩니다.
+플래너는 다음 전문가 풀에서 임무에 가장 적합한 에이전트를 자동으로 선발합니다:
 
-**활성화 조건 (How to Trigger):**
-이 스킬이 `~/.gemini/GEMINI.md`에 통합되어 있다면, 메인 에이전트는 다음 상황에서 **자동으로** 이 스킬을 호출합니다:
-
-1.  작업이 **3개 이상의 파일 수정**을 필요로 할 때.
-2.  작업에 **뚜렷한 전문성 분리**가 필요할 때 (예: "백엔드와 프론트엔드 둘 다 필요해").
-3.  작업이 **병렬 처리**가 가능할 때.
-
-**작동 방식:**
-
-1.  메인 에이전트가 작업의 복잡성을 인지합니다.
-2.  내부적으로 `planner.py`를 호출하여 팀을 설계합니다.
-3.  `orchestrator.py`를 호출하여 작업을 실행합니다.
-4.  Validator가 검증한 최종 결과를 사용자에게 보고합니다.
-
-### 📜 설정 예시 (Example Configuration)
-
-`GEMINI.md` 또는 `AGENTS.md`에 이 스킬을 통합하는 전체 예시는 다음 파일을 참조하세요:
-[GEMINI_example.md](GEMINI_example.md)
+| 역할 (Role) | 전문 분야 | 모델 (Model) |
+|------|-----------|-------|
+| **Oracle** | 아키텍처, 심층 디버깅, 근본 원인 분석 | gemini-3-pro (Opus 동급) |
+| **Librarian** | 문서 탐색, 코드 구조 분석, 리서치 | gemini-3-flash (Sonnet 동급) |
+| **Explore** | 빠른 파일 검색, 패턴 매칭, 정찰 | gemini-3-flash (Haiku 동급) |
+| **Frontend** | UI/UX, 스타일링, 접근성 | gemini-3-flash (Sonnet 동급) |
+| **Multimodal** | 시각적 분석, 목업 인식 | gemini-3-pro (Sonnet 동급) |
+| **Doc_Writer** | README, API 문서, 주석 작성 | gemini-3-flash (Haiku 동급) |
+| **Prometheus** | 전략 기획, 요구사항 인터뷰 | gemini-3-pro (Opus 동급) |
+| **Momus** | 비판적 검토, 리스크 식별 | gemini-3-pro (Opus 동급) |
+| **Sisyphus** | 작업 조율, 위임 (PM) | gemini-3-flash (Sonnet 동급) |
+| **Junior** | 구현, 코딩, 버그 수정 | gemini-3-flash (Sonnet 동급) |
+| **Quality_Validator** | 최종 검증 및 테스트 (필수 포함) | gemini-3-flash (Sonnet 동급) |
 
 ---
 
@@ -107,6 +107,8 @@ IDE에서 Gemini Agent와 대화하던 중, 복잡한 작업을 에이전트가 
 - **`task_plan.md`**: 작업의 마스터 체크리스트.
 - **`findings.md`**: 에이전트 간 지식을 공유하는 스크래치패드.
 - **`progress.md`**: 수행한 작업의 불변 로그 (Log).
+
+> **Note**: 파일 기반 플래닝을 사용하는 "Manus Protocol"은 **[Planning with Files](https://github.com/OthmanAdi/planning-with-files)**에서 영감을 받았습니다.
 
 ### "Validator" 규칙
 
@@ -125,8 +127,22 @@ antigravity-swarm/
 ├── scripts/
 │   ├── planner.py       # "Hiring Manager" (subagents.yaml 생성)
 │   ├── orchestrator.py  # "Project Manager" (에이전트 실행 및 관리)
-│   └── dispatch_agent.py # "Worker" (Gemini CLI 연동 Shim Layer)
+│   ├── dispatch_agent.py # "Worker" (Gemini CLI 연동 Shim Layer)
+│   └── ultrawork_loop.py # "Autonomous Loop" (Plan -> Act -> Verify 반복)
 ├── subagents.yaml       # 현재 구성된 에이전트 명단
 ├── task_plan.md         # 현재 미션의 진행 상황
-└── README.md            # 영문 설명서
+└── README.md            # 영문 설명서 (본 파일)
 ```
+
+---
+
+## ⭐️ Credits & Inspiration
+
+이 프로젝트는 **[Oh-My-Opencode](https://github.com/code-yeongyu/oh-my-opencode)**에서 깊은 영감을 받았습니다.
+
+다음 핵심 철학들을 채택하였습니다:
+- **Multi-Agent Orchestration**: 전문화된 역할(Oracle, Librarian, Sisyphus 등)을 통한 분업.
+- **The "Manus Protocol"**: `task_plan.md` 등을 활용한 영구적 상태 관리.
+- **Ultrawork Loop**: 자율적인 "Plan -> Act -> Verify" 반복 사이클.
+
+이러한 에이전트 상호작용 패턴을 정립해주신 원작자분들께 깊은 감사를 드립니다.

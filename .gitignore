@@ -36,3 +36,14 @@ yarn-error.log
 # OS
 .DS_Store
 Thumbs.db
+
+# Oh-My-Opencode / Manus Protocol
+.sisyphus/
+findings.md
+progress.md
+task_plan.md
+NEW-PRMT.md
+
+# Runtime Artifacts
+logs/
+subagents.yaml

@@ -4,6 +4,21 @@
 
 This skill allows you to spawn multiple specialized AI agents (Sub-Agents) to work on complex tasks in parallel. Whether you are using the terminal or the Antigravity IDE, this tool orchestrates a team of experts—Architects, Engineers, and Validators—to solve your problems efficiently.
 
+```text
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃                   ✨ Antigravity Swarm Mission Control ✨                    ┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+╭──────────────────┬───────────┬─────────────┬──────╮╭───── Live Activity ─────╮
+│ Agent            │ Role      │   Status    │ Time ││                         │
+├──────────────────┼───────────┼─────────────┼──────┤│                         │
+│ Prometheus       │ serial    │ ✔ Completed │ 32s  ││                         │
+│ Junior           │ serial    │ 🔄 Running  │ 15s  ││ Agent: Junior           │
+│ Quality_Validat… │ validator │ ⏳ Pending  │ -    ││ Action: Implementing    │
+╰──────────────────┴───────────┴─────────────┴──────╯│ core logic...           │
+                                                     │                         │
+                                                     ╰─────────────────────────╯
+```
+
 > [!IMPORTANT] > **Why do you need this?**
 > As of 2026-01-31, **there is NO native method** to deploy sub-agents in Gemini CLI or the Antigravity IDE.
 > This skill bridges that gap, unlocking true parallel agent orchestration for your environment.

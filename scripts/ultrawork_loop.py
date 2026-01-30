@@ -25,9 +25,15 @@ def main():
     script_dir = os.path.dirname(os.path.abspath(__file__))
     planner_script = os.path.join(script_dir, "planner.py")
     orchestrator_script = os.path.join(script_dir, "orchestrator.py")
+    compactor_script = os.path.join(script_dir, "compactor.py")
 
     for attempt in range(1, MAX_RETRIES + 1):
         print(f"\n[Ultrawork] Attempt {attempt}/{MAX_RETRIES}")
+        
+        # Step 0: Compaction
+        if os.path.exists(compactor_script):
+            subprocess.run([sys.executable, compactor_script])
+
         print(f"[Ultrawork] Mission: {mission}")
         
         # Step 1: Plan

@@ -31,6 +31,11 @@ This skill allows you to spawn multiple specialized AI agents (Sub-Agents) to wo
 > The system actively reads and writes to `task_plan.md`, `findings.md`, and `subagents.yaml`.
 > Manual edits during execution may cause race conditions or inconsistent agent behavior.
 
+> [!NOTE]
+> **State Files Management**
+> When you initiate a major mission, the system will automatically generate `task_plan.md`, `findings.md`, and `progress.md` in your project root.
+> These files serve as the "shared memory" for the agent swarm. Do not delete them while a mission is active.
+
 ---
 
 ## Why use this?

@@ -47,3 +47,4 @@ NEW-PRMT.md
 # Runtime Artifacts
 logs/
 subagents.yaml
+*.bak

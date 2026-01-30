@@ -31,6 +31,11 @@
 > 시스템은 `task_plan.md`, `findings.md`, `subagents.yaml` 파일을 실시간으로 읽고 씁니다.
 > 실행 중에 수동으로 파일을 편집하면 경합 조건(Race Condition)이나 에이전트의 오작동을 유발할 수 있습니다.
 
+> [!NOTE]
+> **상태 파일 관리 (State Files Management)**
+> 대규모 미션을 시작하면 시스템은 프로젝트 루트에 `task_plan.md`, `findings.md`, `progress.md` 파일을 자동으로 생성합니다.
+> 이 파일들은 에이전트 스웜(Swarm)의 "공유 메모리" 역할을 합니다. 미션이 진행되는 동안에는 이 파일들을 삭제하지 마십시오.
+
 ---
 
 ## 왜 이 스킬을 사용해야 하나요?

@@ -6,43 +6,130 @@
 
 ```text
 ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
-┃                   ✨ Antigravity Swarm Mission Control ✨                    ┃
+┃                   ✨ Antigravity Swarm Mission Control ✨                      ┃
 ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
-╭──────────────────┬───────────┬─────────────┬──────╮╭───── Live Activity ─────╮
-│ Agent            │ Role      │   Status    │ Time ││                         │
-├──────────────────┼───────────┼─────────────┼──────┤│                         │
-│ Prometheus       │ serial    │ ✔ Completed │ 32s  ││                         │
-│ Junior           │ serial    │ 🔄 Running  │ 15s  ││ Agent: Junior           │
-│ Quality_Validat… │ validator │ ⏳ Pending  │ -    ││ Action: Implementing    │
-╰──────────────────┴───────────┴─────────────┴──────╯│ core logic...           │
-                                                     │                         │
-                                                     ╰─────────────────────────╯
+┌──────────────┬──────────┬──────────────┬───────┬─────────┬─────────────────────┐
+│ Agent        │ Role     │ Status       │ Time  │ Msgs    │ Backend             │
+├──────────────┼──────────┼──────────────┼───────┼─────────┼─────────────────────┤
+│ ● Oracle     │ parallel │ ⠋ Running    │ 12.3s │ ↑2 ↓1   │ tmux %3             │
+│ ● Junior     │ parallel │ ⠋ Running    │ 10.1s │ ↑0 ↓1   │ tmux %4             │
+│ ● Librarian  │ serial   │ • Pending    │ -     │ -       │ -                   │
+│ ● Validator  │ validator│ • Pending    │ -     │ -       │ -                   │
+└──────────────┴──────────┴──────────────┴───────┴─────────┴─────────────────────┘
+┌─── Live Activity ──────────────────────────────────────────────────────────────┐
+│ Oracle: Analyzing auth.py module structure...                                  │
+└────────────────────────────────────────────────────────────────────────────────┘
+ [Tab] View  [↑↓] Select  [k] Kill  [s] Shutdown  [q] Quit
 ```
 
-> [!IMPORTANT] > **왜 이 스킬이 필요한가요?**
+> [!IMPORTANT]
+> **왜 이 스킬이 필요한가요?**
 > 2026년 1월 31일 기준, Gemini CLI나 Antigravity IDE에는 서브에이전트를 배포할 수 있는 **네이티브 기능이 존재하지 않습니다.**
 > 이 스킬은 그 공백을 메워, 여러분의 개발 환경에서 진정한 병렬 에이전트 오케스트레이션을 가능하게 합니다.
 
-> [!NOTE] > **Windows 호환성 (Windows Compatibility)**
+> [!NOTE]
+> **Windows 호환성 (Windows Compatibility)**
 > 이 스킬은 Windows PowerShell 환경(CP949/한국어 로케일)을 완벽하게 지원합니다. 모든 입출력 작업에 UTF-8 인코딩을 강제하여 인코딩 오류를 방지했습니다.
 
 > [!WARNING]
-> **Orchestrator가 실행 중일 때 이 디렉토리의 파일을 수정하지 마십시오.**
-> 시스템은 `task_plan.md`, `findings.md`, `subagents.yaml` 파일을 실시간으로 읽고 씁니다.
+> **Orchestrator가 실행 중일 때 `.swarm/` 디렉토리의 파일을 수정하지 마십시오.**
+> 시스템은 메일박스, 감사 추적(audit trail), 미션 상태 파일을 실시간으로 읽고 씁니다.
 > 실행 중에 수동으로 파일을 편집하면 경합 조건(Race Condition)이나 에이전트의 오작동을 유발할 수 있습니다.
 
 > [!NOTE]
 > **상태 파일 관리 (State Files Management)**
-> 대규모 미션을 시작하면 시스템은 프로젝트 루트에 `task_plan.md`, `findings.md`, `progress.md` 파일을 자동으로 생성합니다.
-> 이 파일들은 에이전트 스웜(Swarm)의 "공유 메모리" 역할을 합니다. 미션이 진행되는 동안에는 이 파일들을 삭제하지 마십시오.
+> 대규모 미션을 시작하면 시스템은 프로젝트 루트에 `.swarm/` 디렉토리를 자동으로 생성합니다.
+> 이 디렉토리는 에이전트 스웜(Swarm)의 "공유 메모리" 및 통신 계층 역할을 합니다. 미션이 진행되는 동안에는 이 디렉토리를 삭제하지 마십시오.
 
 ---
 
 ## 왜 이 스킬을 사용해야 하나요?
 
-- **병렬 처리 (Parallel Execution)**: 한 명의 에이전트가 끝날 때까지 기다릴 필요가 없습니다. 3명의 에이전트를 동시에 실행하세요 (예: 한 명은 문서 작성, 한 명은 테스트 작성, 한 명은 코드 작성).
+- **병렬 처리 (Parallel Execution)**: 한 명의 에이전트가 끝날 때까지 기다릴 필요가 없습니다. 여러 에이전트를 동시에 실행하세요 (예: 한 명은 문서 작성, 한 명은 테스트 작성, 한 명은 코드 작성).
 - **전문성 (Specialization)**: 각 에이전트에게 서로 다른 "페르소나"(프롬프트)를 부여하여 전문적인 작업을 수행하게 합니다.
-- **품질 보증 (Quality Assurance)**: **[NEW]** 모든 팀에는 **Validator Agent(검증가)**가 필수적으로 포함되어, 작업 완료 전 결과물을 검토하고 높은 품질을 보장합니다.
+- **품질 보증 (Quality Assurance)**: 모든 팀에는 **Validator Agent(검증가)**가 필수적으로 포함되어, 작업 완료 전 결과물을 검토하고 높은 품질을 보장합니다.
+- **실시간 통신 (Live Communication)**: **[NEW v2]** 에이전트들이 메시지를 주고받으며 실시간으로 협업합니다.
+- **인터랙티브 TUI (Interactive TUI)**: **[NEW v2]** 3가지 뷰(Dashboard, Messages, Agent Detail)로 미션 진행 상황을 실시간 모니터링합니다.
+- **미션 재개 (Mission Resume)**: **[NEW v2]** 중단된 미션을 이어서 진행할 수 있습니다.
+
+---
+
+## v2 신규 기능
+
+### 🔄 에이전트 간 실시간 통신
+에이전트들은 파일 기반 JSON 메일박스 시스템을 통해 메시지를 주고받으며 협업합니다:
+- **다이렉트 메시지**: `<<SEND_MESSAGE to="Agent명">>내용<</SEND_MESSAGE>>`
+- **브로드캐스트**: `<<BROADCAST>>모든 에이전트에게 알림<</BROADCAST>>`
+- **자동 라우팅**: 메시지는 `.swarm/mailboxes/{agent}/inbox/` 디렉토리로 자동 전달됩니다.
+
+### 🎭 향상된 에이전트 라이프사이클
+```
+PENDING → RUNNING → IDLE → (폴링) → RUNNING → COMPLETED/FAILED/SHUTDOWN
+```
+- **IDLE 상태**: 작업 완료 후 대기 중인 에이전트는 새 메시지나 작업을 받을 수 있습니다.
+- **하트비트 모니터링**: 응답 없는 에이전트 자동 감지 및 처리
+
+### 📊 인터랙티브 TUI v2
+3가지 뷰를 Tab 키로 전환:
+1. **Dashboard View**: 6개 열로 모든 에이전트의 상태를 한눈에 확인 (Agent, Role, Status, Time, Msgs, Backend)
+2. **Messages View**: 에이전트 간 메시지 타임라인 (누가, 언제, 무엇을, 누구에게)
+3. **Agent Detail View**: 선택한 에이전트의 전체 출력 및 컨텍스트 확인
+
+**키보드 단축키**:
+- `Tab`: 뷰 전환 (Dashboard ↔ Messages ↔ Agent Detail)
+- `↑/↓`: 에이전트 선택
+- `Enter`: 선택한 에이전트 상세보기
+- `k`: 선택한 에이전트 종료 (kill)
+- `s`: 선택한 에이전트에게 셧다운 요청 전송
+- `q`: 전체 미션 종료
+- `Esc`: 상세보기에서 대시보드로 돌아가기
+- `?`: 도움말 표시
+
+### 🔌 백엔드 추상화
+시스템이 사용 가능한 환경에 따라 최적의 백엔드를 자동 선택합니다:
+- **Thread Backend** (기본값): 모든 환경에서 작동
+- **Tmux Backend**: tmux가 설치되어 있으면 자동으로 활성화 (각 에이전트가 별도의 tmux 패널에서 실행)
+
+### 📝 감사 추적 (Audit Trail)
+모든 에이전트 활동이 `.swarm/audit/mission-{id}.jsonl` 파일에 append-only 형식으로 기록됩니다:
+- 에이전트 상태 변경
+- 메시지 송수신
+- 작업 시작/완료
+- 에러 및 경고
+
+### 💾 미션 영속화 및 재개
+미션 상태가 `.swarm/missions/mission-{id}.json`에 저장되어 중단된 작업을 재개할 수 있습니다:
+```bash
+# 마지막 미션 재개
+python3 scripts/orchestrator.py --resume
+
+# Ultrawork Loop에서 재개
+python3 scripts/ultrawork_loop.py --resume
+```
+
+### 🎯 팀 프리셋 (Team Presets)
+`swarm-config.yaml` 파일에서 재사용 가능한 팀 구성을 정의할 수 있습니다:
+```bash
+python3 scripts/planner.py --preset fullstack "Todo 앱 만들어줘"
+```
+
+프리셋 예시:
+- `fullstack`: Oracle + Junior + Frontend + Validator
+- `backend`: Oracle + Junior + Validator
+- `research`: Librarian + Explore + Doc_Writer + Validator
+
+### 📊 미션 완료 후 리포트
+미션 종료 시 자동으로 요약 리포트가 생성됩니다:
+- 총 실행 시간
+- 에이전트별 통계 (실행 시간, 메시지 수, 상태)
+- 성공/실패 여부
+- 주요 이벤트 타임라인
+
+### ⚡ 스트리밍 사이드 이펙트 파싱
+에이전트 출력이 스트리밍되는 동안 실시간으로 태그를 감지하고 실행합니다:
+- `<<SEND_MESSAGE>>`, `<<BROADCAST>>` 태그 즉시 처리
+- `<<UPDATE_STATUS>>`, `<<REQUEST_WORK>>` 태그 실시간 반영
+- 에이전트 응답 대기 시간 최소화
 
 ---
 
@@ -62,6 +149,24 @@
 
 3.  **Gemini CLI**: `gemini` 명령어가 설치되어 있고 PATH에 등록되어 있어야 합니다.
 
+4.  **설정 파일 (선택사항)**: 프로젝트 루트에 `swarm-config.yaml` 파일을 생성하여 기본 설정을 커스터마이즈할 수 있습니다:
+    ```yaml
+    backend: auto                  # auto | tmux | thread
+    default_model: auto-gemini-3
+    max_parallel: 5
+    poll_interval_ms: 1000
+    audit_enabled: true
+    tui_refresh_rate: 10
+
+    # 팀 프리셋 정의
+    presets:
+      fullstack:
+        - Oracle
+        - Junior
+        - Frontend
+        - Quality_Validator
+    ```
+
 ---
 
 ## 사용 가이드 (User Manual)
@@ -77,6 +182,9 @@
 
 ```bash
 python3 scripts/planner.py "뱀 게임을 만들어줘. 배경은 초록색이고 점수 기록 기능이 있어야 해."
+
+# 또는 프리셋 팀 사용
+python3 scripts/planner.py --preset fullstack "Todo 앱 만들어줘"
 ```
 
 **Step 2: 계획 검토 (Review)**
@@ -87,7 +195,22 @@ Planner는 **가용 에이전트 풀** (하단 참조)에서 최적의 팀을 �
 
 ```bash
 python3 scripts/orchestrator.py
+
+# 데모 모드 (Gemini 불필요)
+python3 scripts/orchestrator.py --demo
+
+# 중단된 미션 재개
+python3 scripts/orchestrator.py --resume
 ```
+
+**Step 4: TUI 조작**
+미션 실행 중 인터랙티브 TUI에서 실시간으로 모니터링:
+- `Tab` 키로 Dashboard/Messages/Agent Detail 뷰 전환
+- `↑/↓` 키로 에이전트 선택
+- `Enter` 키로 상세보기
+- `k` 키로 에이전트 종료
+- `s` 키로 에이전트 셧다운 요청
+- `q` 키로 전체 종료
 
 ### 🅱️ 시나리오 B: Ultrawork Loop (자율 모드)
 
@@ -95,6 +218,9 @@ python3 scripts/orchestrator.py
 
 ```bash
 python3 scripts/ultrawork_loop.py "인증 모듈을 리팩토링하고 테스트 코드를 추가해줘"
+
+# 마지막 미션에서 재개
+python3 scripts/ultrawork_loop.py --resume
 ```
 
 ### 🆎 시나리오 C: Antigravity IDE (에이전트 통합)
@@ -125,13 +251,39 @@ Planner는 다음 전문가 풀에서 미션에 가장 적합한 에이전트를
 
 ## 프로토콜 및 아키텍처 (Protocol & Architecture)
 
-### "Manus Protocol"
+### "Manus Protocol" (파일 기반 상태 관리)
 
 이 스킬은 엄격한 상태 관리 프로토콜을 따릅니다:
 
 - **`task_plan.md`**: 작업의 마스터 체크리스트.
 - **`findings.md`**: 에이전트 간 지식을 공유하는 스크래치패드.
 - **`progress.md`**: 수행한 작업의 불변 로그 (Log).
+
+### 메일박스 시스템 (Mailbox System) **[NEW v2]**
+
+에이전트 간 실시간 통신을 위한 파일 기반 JSON 메일박스:
+
+**디렉토리 구조**:
+```
+.swarm/mailboxes/
+├── oracle/
+│   ├── inbox/          # 읽지 않은 메시지
+│   └── processed/      # 읽은 메시지
+└── junior/
+    ├── inbox/
+    └── processed/
+```
+
+**메시지 태그**:
+- `<<SEND_MESSAGE to="Agent명">>내용<</SEND_MESSAGE>>`: 특정 에이전트에게 메시지 전송
+- `<<BROADCAST>>내용<</BROADCAST>>`: 모든 에이전트에게 메시지 브로드캐스트
+
+**메시지 처리 흐름**:
+1. 에이전트가 출력에 메시지 태그를 포함
+2. Orchestrator가 실시간으로 태그 감지 및 파싱
+3. 수신자의 `inbox/` 디렉토리에 JSON 파일로 저장
+4. 수신 에이전트가 다음 폴링 시 메시지 수신
+5. 읽은 메시지는 `processed/` 디렉토리로 이동
 
 ### "Validator" 규칙
 
@@ -148,14 +300,190 @@ Planner는 다음 전문가 풀에서 미션에 가장 적합한 에이전트를
 ```text
 antigravity-swarm/
 ├── scripts/
-│   ├── planner.py       # "Hiring Manager" (subagents.yaml 생성)
-│   ├── orchestrator.py  # "Project Manager" (에이전트 실행 및 관리)
-│   ├── dispatch_agent.py # "Worker" (Gemini CLI 연동 Shim Layer)
-│   └── ultrawork_loop.py # "Autonomous Loop" (자율 반복 루프)
-├── subagents.yaml       # 현재 구성된 에이전트 명단
-├── task_plan.md         # 현재 미션의 진행 상황
-└── README.md            # 영문 설명서
+│   ├── core/                    # [NEW] 공유 코어 패키지
+│   │   ├── __init__.py
+│   │   ├── config.py            # 중앙화된 설정 + get_gemini_path()
+│   │   ├── types.py             # AgentStatus, MessageType, AgentIdentity
+│   │   ├── mailbox.py           # 파일 기반 JSON 메일박스 시스템
+│   │   ├── audit.py             # Append-only JSONL 감사 추적
+│   │   ├── mission.py           # 미션 상태 영속화
+│   │   └── backends/
+│   │       ├── __init__.py      # get_backend() 팩토리
+│   │       ├── base.py          # SpawnBackend ABC
+│   │       ├── thread_backend.py
+│   │       └── tmux_backend.py
+│   ├── planner.py               # 팀 구성 + 프리셋 + 팀 설정
+│   ├── orchestrator.py          # 인터랙티브 TUI v2 + 백엔드 + 메일박스
+│   ├── dispatch_agent.py        # 에이전트 라이프사이클 + 스트리밍 파싱 + 메시징
+│   ├── ultrawork_loop.py        # 자율 루프 + 재개 지원
+│   ├── compactor.py             # 컨텍스트 압축
+│   └── reporter.py              # [NEW] 미션 완료 후 요약 리포트
+├── swarm-config.yaml            # [NEW] 사용자 설정 + 프리셋
+├── SKILL.md
+├── README.md
+└── README_KO.md
 ```
+
+### 런타임 디렉토리 (.swarm/) **[NEW v2]**
+
+미션 실행 시 프로젝트 루트에 자동 생성되는 디렉토리:
+
+```text
+.swarm/
+├── config.json                  # 팀 명단 (자동 생성)
+├── mailboxes/
+│   ├── oracle/
+│   │   ├── inbox/               # 읽지 않은 메시지
+│   │   └── processed/           # 읽은 메시지
+│   └── junior/
+│       ├── inbox/
+│       └── processed/
+├── audit/
+│   └── mission-xyz.jsonl        # Append-only 감사 추적
+└── missions/
+    └── mission-xyz.json         # 미션 상태 (재개용)
+```
+
+---
+
+## TUI 조작법 (TUI Controls) **[NEW v2]**
+
+인터랙티브 TUI는 3가지 뷰를 제공합니다:
+
+### Dashboard View (기본 뷰)
+6개 열로 모든 에이전트의 상태를 한눈에 확인:
+- **Agent**: 에이전트 이름 및 상태 아이콘
+- **Role**: 에이전트 역할 (parallel/serial/validator)
+- **Status**: 현재 상태 (Pending/Running/Idle/Completed/Failed)
+- **Time**: 실행 시간
+- **Msgs**: 메시지 통계 (↑ 송신, ↓ 수신)
+- **Backend**: 실행 백엔드 (tmux 패널 번호 또는 thread)
+
+### Messages View
+에이전트 간 메시지 타임라인:
+- 시간순 정렬
+- 송신자 → 수신자 표시
+- 메시지 내용 미리보기
+- 브로드캐스트 메시지 하이라이트
+
+### Agent Detail View
+선택한 에이전트의 상세 정보:
+- 전체 출력 로그
+- 현재 컨텍스트
+- 메시지 히스토리
+- 상태 변경 이력
+
+### 키보드 단축키
+
+| 키 | 기능 |
+|---|---|
+| `Tab` | 뷰 전환 (Dashboard ↔ Messages ↔ Agent Detail) |
+| `↑/↓` | 에이전트 선택 |
+| `Enter` | 선택한 에이전트 상세보기 |
+| `k` | 선택한 에이전트 강제 종료 (kill) |
+| `s` | 선택한 에이전트에게 셧다운 요청 전송 |
+| `q` | 전체 미션 종료 |
+| `Esc` | 상세보기에서 대시보드로 돌아가기 |
+| `?` | 도움말 표시 |
+
+---
+
+## 설정 (Configuration) **[NEW v2]**
+
+`swarm-config.yaml` 파일을 프로젝트 루트에 생성하여 시스템 동작을 커스터마이즈할 수 있습니다:
+
+```yaml
+# 백엔드 선택 (auto: 자동 감지, tmux: tmux 강제, thread: thread 강제)
+backend: auto
+
+# 기본 모델
+default_model: auto-gemini-3
+
+# 최대 병렬 에이전트 수
+max_parallel: 5
+
+# 폴링 간격 (밀리초)
+poll_interval_ms: 1000
+
+# 권한 모드 (auto: 자동 승인, ask: 매번 확인, deny: 거부)
+permission_mode: auto
+
+# 감사 추적 활성화
+audit_enabled: true
+
+# TUI 갱신 주기 (Hz)
+tui_refresh_rate: 10
+
+# 컨텍스트 압축 임계값
+compaction_threshold: 50
+
+# 팀 프리셋 정의
+presets:
+  fullstack:
+    - Oracle
+    - Junior
+    - Frontend
+    - Quality_Validator
+
+  backend:
+    - Oracle
+    - Junior
+    - Quality_Validator
+
+  research:
+    - Librarian
+    - Explore
+    - Doc_Writer
+    - Quality_Validator
+```
+
+### 프리셋 사용
+
+프리셋을 사용하여 미리 정의된 팀 구성으로 빠르게 시작:
+
+```bash
+python3 scripts/planner.py --preset fullstack "Todo 앱 만들어줘"
+python3 scripts/planner.py --preset backend "API 엔드포인트 추가해줘"
+python3 scripts/planner.py --preset research "React 최신 패턴 조사해줘"
+```
+
+---
+
+## 고급 기능 (Advanced Features)
+
+### 미션 재개 (Mission Resume)
+
+중단된 미션을 재개할 수 있습니다:
+
+```bash
+# Orchestrator로 재개
+python3 scripts/orchestrator.py --resume
+
+# Ultrawork Loop로 재개
+python3 scripts/ultrawork_loop.py --resume
+```
+
+시스템은 `.swarm/missions/` 디렉토리에서 가장 최근 미션을 자동으로 찾아 재개합니다.
+
+### 감사 추적 (Audit Trail)
+
+모든 에이전트 활동이 `.swarm/audit/mission-{id}.jsonl` 파일에 기록됩니다:
+
+```jsonl
+{"timestamp": "2026-02-11T10:30:00", "event": "agent_started", "agent": "oracle", "data": {...}}
+{"timestamp": "2026-02-11T10:30:15", "event": "message_sent", "from": "oracle", "to": "junior", "content": "..."}
+{"timestamp": "2026-02-11T10:30:45", "event": "status_changed", "agent": "oracle", "from": "running", "to": "idle"}
+```
+
+### 데모 모드 (Demo Mode)
+
+Gemini CLI 없이도 TUI를 테스트할 수 있습니다:
+
+```bash
+python3 scripts/orchestrator.py --demo
+```
+
+모의(mock) 에이전트들이 실행되어 TUI와 메시징 시스템을 시연합니다.
 
 ---
 

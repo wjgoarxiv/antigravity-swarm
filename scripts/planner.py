@@ -6,7 +6,12 @@ import sys
 import subprocess
 import re
 import os
-import shutil
+import json
+import time
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from scripts.core.config import get_gemini_path, SwarmConfig, ensure_dirs, STATE_DIR
+from scripts.core.types import AgentIdentity, assign_color
 
 CONFIG_FILE = "subagents.yaml"
 
@@ -74,18 +79,6 @@ AGENT_POOL = {
     }
 }
 
-def get_gemini_path():
-    # 1. Check env var
-    path = os.environ.get("GEMINI_PATH")
-    if path and os.path.isfile(path) and os.access(path, os.X_OK):
-        return path
-    
-    # 2. Check system PATH
-    path = shutil.which("gemini")
-    if path:
-        return path
-        
-    return None
 
 def generate_prompt(mission):
     # Construct the Agent Pool description string
@@ -127,6 +120,17 @@ subagents:
       You are Oracle.
       [Specific instructions for this mission...]
 
+      Additionally, agents can communicate with each other using:
+      3. TO SEND A MESSAGE TO ANOTHER AGENT:
+      <<SEND_MESSAGE to="agent_name">>
+      Message content here...
+      <<END_MESSAGE>>
+
+      4. TO BROADCAST TO ALL AGENTS:
+      <<BROADCAST>>
+      Message content here...
+      <<END_BROADCAST>>
+
   - name: "Quality_Validator"
     description: "Verifies the work"
     color: "green"
@@ -135,10 +139,97 @@ subagents:
     prompt: |
       You are Quality_Validator.
       [Specific verification instructions...]
+
+      Additionally, agents can communicate with each other using:
+      3. TO SEND A MESSAGE TO ANOTHER AGENT:
+      <<SEND_MESSAGE to="agent_name">>
+      Message content here...
+      <<END_MESSAGE>>
+
+      4. TO BROADCAST TO ALL AGENTS:
+      <<BROADCAST>>
+      Message content here...
+      <<END_BROADCAST>>
 ```
 
 Do not include any other text outside the YAML block.
 """
+
+def generate_from_preset(preset, mission):
+    """Generate subagents.yaml content from a preset definition."""
+    agents = preset.get("agents", [])
+    lines = ["subagents:"]
+    for i, agent_cfg in enumerate(agents):
+        name = agent_cfg.get("name", f"Agent{i}")
+        mode = agent_cfg.get("mode", "parallel")
+        info = AGENT_POOL.get(name, {})
+        color = info.get("color", assign_color(i))
+        model = info.get("model", "auto-gemini-3")
+        base_prompt = info.get("prompt", f"You are {name}.")
+
+        lines.append(f'  - name: "{name}"')
+        lines.append(f'    description: "{info.get("description", name)}"')
+        lines.append(f'    color: "{color}"')
+        lines.append(f'    model: "{model}"')
+        lines.append(f'    mode: "{mode}"')
+        lines.append(f'    prompt: |')
+        lines.append(f'      {base_prompt}')
+        lines.append(f'      Mission: {mission}')
+        lines.append('')
+    return "\n".join(lines)
+
+def _save_config_and_team(yaml_content, plan_content, mission):
+    """Save subagents.yaml, task_plan.md, and generate team config."""
+    import yaml as yaml_module
+
+    # Save subagents.yaml
+    with open(CONFIG_FILE, 'w', encoding='utf-8') as f:
+        f.write(yaml_content)
+
+    # Save task_plan.md
+    with open("task_plan.md", 'w', encoding='utf-8') as f:
+        f.write(plan_content)
+
+    # Initialize other Manus Protocol files if they don't exist
+    if not os.path.exists("findings.md"):
+        with open("findings.md", 'w', encoding='utf-8') as f:
+            f.write("# Findings & Scratchpad\n\nUse this file to store shared knowledge, research notes, and intermediate outputs.")
+
+    if not os.path.exists("progress.md"):
+        with open("progress.md", 'w', encoding='utf-8') as f:
+            f.write(f"# Mission Progress\n\nMission: {mission}\n\n## Status Log\n")
+
+    # Generate team config
+    ensure_dirs()
+    parsed = yaml_module.safe_load(yaml_content)
+    team_name = mission.lower().replace(' ', '-')[:30] or "mission"
+
+    team_config = {
+        "name": team_name,
+        "created_at": time.time(),
+        "leader": "leader",
+        "members": [],
+        "settings": {"backend": "auto", "poll_interval_ms": 1000}
+    }
+
+    for agent in parsed.get("subagents", []):
+        team_config["members"].append({
+            "agent_id": f"{agent['name'].lower()}@{team_name}",
+            "name": agent["name"],
+            "color": agent.get("color", "white"),
+            "model": agent.get("model", "auto-gemini-3"),
+            "mode": agent.get("mode", "parallel"),
+            "status": "pending"
+        })
+
+    config_path = os.path.join(STATE_DIR, "config.json")
+    with open(config_path, 'w', encoding='utf-8') as f:
+        json.dump(team_config, f, indent=2)
+
+    print(f"[Planner] Configuration saved to {CONFIG_FILE}.")
+    print(f"[Planner] Created 'task_plan.md', 'findings.md', 'progress.md'.")
+    print(f"[Planner] Team config saved to {config_path}")
+    print("[Planner] Ready to execute. Run 'python3 scripts/orchestrator.py' to start.")
 
 def main():
     # Fix for Windows CP949 encoding issue
@@ -149,8 +240,56 @@ def main():
         print("Usage: python3 scripts/planner.py <mission_description>")
         sys.exit(1)
 
-    mission = " ".join(sys.argv[1:])
+    # Check for --preset flag
+    preset_name = None
+    if "--preset" in sys.argv:
+        idx = sys.argv.index("--preset")
+        if idx + 1 < len(sys.argv):
+            preset_name = sys.argv[idx + 1]
+            # Remove --preset and its value from args
+            args = [a for i, a in enumerate(sys.argv[1:], 1) if i != idx and i != idx + 1]
+        else:
+            print("[Planner] Error: --preset flag requires a preset name")
+            sys.exit(1)
+    else:
+        args = sys.argv[1:]
+
+    mission = " ".join(args)
     print(f"[Planner] Analyzing mission: '{mission}'...")
+
+    if preset_name:
+        config = SwarmConfig.load()
+        if preset_name in config.presets:
+            print(f"[Planner] Using preset: {preset_name}")
+            preset = config.presets[preset_name]
+            # Generate YAML from preset instead of calling Gemini
+            yaml_content = generate_from_preset(preset, mission)
+            plan_content = f"# Task Plan (From Preset: {preset_name})\n\nMission: {mission}\n\n- [ ] Review Mission\n- [ ] Execute Tasks"
+
+            # Skip to saving section
+            print("\n[Planner] Proposed Plan:")
+            print("------------------------------------------")
+            print("[1] TASK PLAN (task_plan.md):")
+            print(plan_content)
+            print("\n[2] AGENT ROSTER (subagents.yaml):")
+            for line in yaml_content.splitlines():
+                if "name:" in line or "description:" in line:
+                    print(line)
+            print("------------------------------------------")
+
+            if "--yes" not in sys.argv:
+                confirm = input("\n[Plan Mode] Save this configuration? [y/N]: ").strip().lower()
+                if confirm != 'y':
+                    print("[Planner] Operation cancelled by user.")
+                    sys.exit(0)
+
+            # Save artifacts and generate team config (shared code path)
+            _save_config_and_team(yaml_content, plan_content, mission)
+            sys.exit(0)
+        else:
+            print(f"[Planner] Error: Preset '{preset_name}' not found in swarm-config.yaml")
+            sys.exit(1)
+
     print("[Planner] Consulting with Supervisor Agent...")
 
     gemini_path = get_gemini_path()
@@ -209,25 +348,8 @@ def main():
                     print("[Planner] Operation cancelled by user.")
                     sys.exit(0)
 
-            # Save artifacts
-            with open(CONFIG_FILE, 'w', encoding='utf-8') as f:
-                f.write(yaml_content)
-            
-            with open("task_plan.md", 'w', encoding='utf-8') as f:
-                f.write(plan_content)
-                
-            # Initialize other Manus Protocol files if they don't exist
-            if not os.path.exists("findings.md"):
-                with open("findings.md", 'w', encoding='utf-8') as f:
-                    f.write("# Findings & Scratchpad\n\nUse this file to store shared knowledge, research notes, and intermediate outputs.")
-            
-            if not os.path.exists("progress.md"):
-                with open("progress.md", 'w', encoding='utf-8') as f:
-                    f.write(f"# Mission Progress\n\nMission: {mission}\n\n## Status Log\n")
-
-            print(f"[Planner] Configuration saved to {CONFIG_FILE}.")
-            print(f"[Planner] Created 'task_plan.md', 'findings.md', 'progress.md'.")
-            print("[Planner] Ready to execute. Run 'python3 scripts/orchestrator.py' to start.")
+            # Save artifacts and generate team config
+            _save_config_and_team(yaml_content, plan_content, mission)
         else:
             print("[Planner] Error: Could not parse YAML from agent output.")
             print("--- Raw Output (STDOUT) ---")

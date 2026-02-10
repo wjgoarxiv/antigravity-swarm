@@ -1,0 +1,50 @@
+# Antigravity Swarm Configuration
+# --------------------------------
+version: 1
+
+# Spawn backend: auto | tmux | thread
+backend: auto
+
+# Default model for agents
+default_model: auto-gemini-3
+
+# Maximum parallel agents
+max_parallel: 5
+
+# Mailbox polling interval (milliseconds)
+poll_interval_ms: 1000
+
+# Permission mode: auto | ask | deny
+# auto = allow all, just audit | ask = prompt for approval | deny = block side effects
+permission_mode: auto
+
+# Audit trail
+audit_enabled: true
+
+# TUI refresh rate (frames per second)
+tui_refresh_rate: 10
+
+# Context compaction threshold (lines before compacting)
+compaction_threshold: 50
+
+# Team presets (reusable team configurations)
+presets:
+  fullstack:
+    description: "Full-stack development team"
+    agents:
+      - {name: Oracle, mode: parallel}
+      - {name: Frontend, mode: parallel}
+      - {name: Junior, mode: parallel}
+      - {name: Quality_Validator, mode: validator}
+  analysis:
+    description: "Deep analysis and planning team"
+    agents:
+      - {name: Prometheus, mode: serial}
+      - {name: Momus, mode: serial}
+      - {name: Librarian, mode: parallel}
+      - {name: Quality_Validator, mode: validator}
+  quick:
+    description: "Fast single-agent execution"
+    agents:
+      - {name: Junior, mode: serial}
+      - {name: Quality_Validator, mode: validator}

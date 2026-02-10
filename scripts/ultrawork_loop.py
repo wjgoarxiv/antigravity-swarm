@@ -7,6 +7,9 @@ import subprocess
 import time
 import os
 
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from scripts.core.mission import MissionState
+
 MAX_RETRIES = 5
 
 def main():
@@ -14,31 +17,48 @@ def main():
     if hasattr(sys.stdout, 'reconfigure'):
         sys.stdout.reconfigure(encoding='utf-8')
 
-    if len(sys.argv) < 2:
-        print("Usage: python3 scripts/ultrawork_loop.py <mission>")
-        sys.exit(1)
+    resume_mode = "--resume" in sys.argv
 
-    mission = " ".join(sys.argv[1:])
-    original_mission = mission
-    
+    if resume_mode:
+        # Resume from last mission
+        mission = MissionState.latest()
+        if not mission or not mission.is_resumable():
+            print("[Ultrawork] No resumable mission found.")
+            sys.exit(1)
+
+        print(f"[Ultrawork] Resuming mission: {mission.description}")
+        mission_text = mission.description
+        start_attempt = mission.attempt
+    else:
+        if len(sys.argv) < 2:
+            print("Usage: python3 scripts/ultrawork_loop.py <mission>")
+            print("       python3 scripts/ultrawork_loop.py --resume")
+            sys.exit(1)
+
+        args = [a for a in sys.argv[1:] if a != "--resume"]
+        mission_text = " ".join(args)
+        start_attempt = 1
+
+    original_mission = mission_text
+
     # Resolve paths
     script_dir = os.path.dirname(os.path.abspath(__file__))
     planner_script = os.path.join(script_dir, "planner.py")
     orchestrator_script = os.path.join(script_dir, "orchestrator.py")
     compactor_script = os.path.join(script_dir, "compactor.py")
 
-    for attempt in range(1, MAX_RETRIES + 1):
+    for attempt in range(start_attempt, MAX_RETRIES + 1):
         print(f"\n[Ultrawork] Attempt {attempt}/{MAX_RETRIES}")
         
         # Step 0: Compaction
         if os.path.exists(compactor_script):
             subprocess.run([sys.executable, compactor_script])
 
-        print(f"[Ultrawork] Mission: {mission}")
-        
+        print(f"[Ultrawork] Mission: {mission_text}")
+
         # Step 1: Plan
         print("[Ultrawork] Planning...")
-        plan_cmd = [sys.executable, planner_script, mission, "--yes"]
+        plan_cmd = [sys.executable, planner_script, mission_text, "--yes"]
         ret = subprocess.run(plan_cmd)
         if ret.returncode != 0:
             print("[Ultrawork] Planning failed! Aborting.")
@@ -57,7 +77,7 @@ def main():
             if attempt < MAX_RETRIES:
                 print("[Ultrawork] Analyzing failure and re-planning...")
                 # Add context to the mission for the next iteration
-                mission = f"Fix previous failure in mission: {original_mission}. Review findings.md and progress.md for errors."
+                mission_text = f"Fix previous failure in mission: {original_mission}. Review findings.md and progress.md for errors."
                 time.sleep(2)
             else:
                 print("[Ultrawork] Max retries reached. Aborting.")

@@ -3,20 +3,12 @@ import subprocess
 import os
 import shutil
 
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from scripts.core.config import get_gemini_path
+
 # Configuration
 THRESHOLD_LINES = 50
 PRESERVE_LINES = 20
-
-def get_gemini_path():
-    path = os.environ.get("GEMINI_PATH")
-    if path and os.path.isfile(path) and os.access(path, os.X_OK):
-        return path
-    
-    path = shutil.which("gemini")
-    if path:
-        return path
-        
-    return None
 
 def compact_file(filepath):
     if not os.path.exists(filepath):

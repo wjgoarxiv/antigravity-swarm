@@ -32,10 +32,15 @@ yarn-error.log
 # Gemini / Antigravity
 .gemini/
 .antigravity/
+.swarm/
+
+# Oh-My-Claudecode
+.omc/
 
 # OS
 .DS_Store
 Thumbs.db
+*~
 
 # Oh-My-Opencode / Manus Protocol
 .sisyphus/
@@ -48,3 +53,8 @@ NEW-PRMT.md
 logs/
 subagents.yaml
 *.bak
+
+# IDE
+.vscode/
+.idea/
+*.swp

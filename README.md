@@ -27,7 +27,8 @@ This skill allows you to spawn multiple specialized AI agents (Sub-Agents) to wo
 > As of 2026-02-28, **there is NO native method** to deploy sub-agents in Gemini CLI or the Antigravity IDE.
 > This skill bridges that gap, unlocking true parallel agent orchestration for your environment.
 
-> [!NOTE] > **Windows Compatibility**
+> [!NOTE] 
+> **Windows Compatibility**
 > This skill includes native support for Windows PowerShell environments (CP949/Korean locale) by enforcing UTF-8 encoding for all I/O operations.
 
 > [!WARNING]

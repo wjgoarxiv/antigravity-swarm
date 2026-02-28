@@ -22,8 +22,9 @@ This skill allows you to spawn multiple specialized AI agents (Sub-Agents) to wo
  [Tab] View  [↑↓] Select  [k] Kill  [s] Shutdown  [q] Quit
 ```
 
-> [!IMPORTANT] > **Why do you need this?**
-> As of 2026-01-31, **there is NO native method** to deploy sub-agents in Gemini CLI or the Antigravity IDE.
+> [!IMPORTANT] 
+> **Why do you need this?**
+> As of 2026-02-28, **there is NO native method** to deploy sub-agents in Gemini CLI or the Antigravity IDE.
 > This skill bridges that gap, unlocking true parallel agent orchestration for your environment.
 
 > [!NOTE] > **Windows Compatibility**

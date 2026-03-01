@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="./cover.png" alt="antigravity-swarm cover" width="100%" />
+</p>
+
 # Antigravity Sub-Agents Skill 🚀
 
 **Hire a team of AI agents to code for you.**

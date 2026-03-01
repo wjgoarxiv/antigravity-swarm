@@ -19,13 +19,42 @@ This skill allows you to spawn multiple specialized AI agents (Sub-Agents) to wo
 ┌─── Live Activity ──────────────────────────────────────────────────────────────┐
 │ Oracle: Analyzing auth.py module structure...                                  │
 └────────────────────────────────────────────────────────────────────────────────┘
- [Tab] View  [↑↓] Select  [k] Kill  [s] Shutdown  [q] Quit
+[Tab] View  [w,s] Select  [k] Kill  [s] Shutdown  [q] Quit
+```
+
+### Agent One-Shot Prompt (Update/Upgrade)
+
+```text
+Update this repository safely and re-validate without reinstalling from scratch.
+
+Repository path: <your-install-path>/antigravity-swarm
+
+Do this exactly:
+1) Check current git status and branch.
+2) Pull latest changes safely (no destructive operations).
+3) Reinstall/refresh Python dependencies only if requirements.txt changed.
+4) Run validation:
+   - gemini --version
+   - python3 -m py_compile scripts/*.py scripts/core/*.py scripts/core/backends/*.py
+   - python3 scripts/orchestrator.py --demo
+5) If nvim/neovim config files exist in this repo and changed, apply/update them; otherwise report "no nvim update needed".
+
+Safety rules:
+- Never run destructive git commands (reset --hard, clean -fd, force push, checkout --).
+- If merge/rebase conflicts happen, stop and report files with conflicts.
+
+Final report format:
+- Pulled: yes/no
+- Dependency refresh: yes/no
+- Validation: pass/fail
+- Nvim update: applied/skipped
+- Next action: one line
 ```
 
 > [!IMPORTANT] 
 > **Why do you need this?**
 >
-> As of 2026-02-28, **there is NO native method** to deploy sub-agents in Gemini CLI or the Antigravity IDE.
+> As of {today-date}, **there is NO native method** to deploy sub-agents in Gemini CLI or the Antigravity IDE.
 > This skill bridges that gap, unlocking true parallel agent orchestration for your environment.
 
 > [!NOTE] 
@@ -74,6 +103,36 @@ Antigravity Swarm has evolved from a batch orchestrator to a **live agent team p
 
 ## Installation
 
+> [!TIP]
+> You can paste the following block directly to an LLM agent and let it perform installation end-to-end.
+
+```text
+Install this repository end-to-end with verification.
+
+Repository: https://github.com/wjgoarxiv/antigravity-swarm
+Target directory: <your-install-path>/antigravity-swarm
+
+Do this exactly:
+1) Clone the repo into the target directory (if already exists, do not reset/delete; report current state).
+2) Install dependencies from requirements.txt.
+3) Verify runtime prerequisites and build health:
+   - gemini --version
+   - python3 -m py_compile scripts/*.py scripts/core/*.py scripts/core/backends/*.py
+   - python3 scripts/orchestrator.py --demo
+4) If this repository contains nvim/neovim setup files, apply those settings too; if not, report "no nvim config found" and continue.
+
+Safety rules:
+- Stop immediately on first failure and report exact failed command + reason.
+- Never run destructive git commands (reset --hard, force push, checkout --, delete existing dirs).
+
+Final report format:
+- Cloned: yes/no
+- Dependencies: yes/no
+- Validation: pass/fail
+- Nvim setup: applied/skipped
+- Next action: one line
+```
+
 1.  **Locate the Skill**: Ensure this repository is in your skills folder:
     ```bash
     ~/.gemini/skills/antigravity-swarm/
@@ -94,64 +153,42 @@ Antigravity Swarm has evolved from a batch orchestrator to a **live agent team p
 
 ## User Manual
 
-There are three main ways to use this skill.
+Use one of these minimal paths.
 
-### 🅰️ Scenario A: Gemini CLI (Manual Mode)
-
-Use this when you want to manually "hire" a team to do a job for you from your terminal.
-
-**Step 1: Hire the Team (Plan)**
-Run the planner with your mission description.
+### Path A: Gemini CLI (Recommended)
 
 ```bash
-python3 scripts/planner.py "Create a Snake game with a green background and score tracking"
+python3 scripts/planner.py --preset quick "Your mission"
+python3 scripts/orchestrator.py --yes
 ```
 
-Or use a team preset:
-
-```bash
-python3 scripts/planner.py --preset fullstack "Build a todo app with React frontend and Flask backend"
-```
-
-**Step 2: Review the Plan**
-The Planner will propose a team from the **Available Agent Pool** (see below) and draft a `task_plan.md`.
-
-**Step 3: Execute (Orchestrate)**
-Once approved, launch the team:
-
-```bash
-python3 scripts/orchestrator.py
-```
-
-Resume an interrupted mission:
+Resume:
 
 ```bash
 python3 scripts/orchestrator.py --resume
 ```
 
-Run in demo mode (no Gemini needed):
+Demo (no Gemini required):
 
 ```bash
 python3 scripts/orchestrator.py --demo
 ```
 
-### 🅱️ Scenario B: Ultrawork Loop (Autonomous Mode)
-
-Use this for "set and forget" operations. The system will Plan -> Act -> Verify -> Fix in a loop until the mission succeeds.
+### Path B: Autonomous Loop
 
 ```bash
-python3 scripts/ultrawork_loop.py "Refactor the authentication module and add tests"
+python3 scripts/ultrawork_loop.py "Your mission"
 ```
 
-Resume from the last mission:
+Resume:
 
 ```bash
 python3 scripts/ultrawork_loop.py --resume
 ```
 
-### 🆎 Scenario C: Antigravity IDE (Agent Integration)
+### Path C: Antigravity IDE
 
-If integrated into `~/.gemini/GEMINI.md`, the Main Agent will **automatically** trigger this skill for complex tasks.
+Add this skill to `~/.gemini/GEMINI.md` and the main agent can trigger it automatically for complex tasks.
 
 ---
 
@@ -253,7 +290,7 @@ The Interactive TUI v2 supports three views with keyboard navigation:
 | Key | Action |
 |-----|--------|
 | **Tab** | Cycle between Dashboard, Messages, and Agent Detail views |
-| **↑ / ↓** | Navigate agent list or messages |
+| **w / s** | Navigate agent list or messages |
 | **Enter** | View detailed information for selected agent/message |
 | **k** | Kill selected agent (SIGTERM) |
 | **s** | Send shutdown request to selected agent |

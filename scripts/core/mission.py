@@ -17,16 +17,22 @@ class MissionState:
     agents: List[dict] = field(default_factory=list)
     attempt: int = 1
     team_name: str = ""
+    updated_at: float = 0.0
+    ended_at: float = 0.0
+    failure_reason: str = ""
 
     def __post_init__(self):
         if not self.team_name:
             # Generate team name from description
             words = self.description.lower().split()[:3]
             self.team_name = "-".join(w for w in words if w.isalnum())[:30] or "mission"
+        if self.updated_at <= 0.0:
+            self.updated_at = self.started_at
 
     def save(self):
         os.makedirs(MISSIONS_DIR, exist_ok=True)
         path = os.path.join(MISSIONS_DIR, f"{self.mission_id}.json")
+        self.updated_at = time.time()
         with open(path, 'w', encoding='utf-8') as f:
             json.dump(asdict(self), f, indent=2)
 
@@ -69,3 +75,17 @@ class MissionState:
         return self.status in ("running", "paused") and any(
             a.get("status") not in ("completed", "failed") for a in self.agents
         )
+
+    def is_stale(self, stale_seconds: float) -> bool:
+        if stale_seconds <= 0:
+            return False
+        return (time.time() - self.updated_at) > stale_seconds
+
+    def mark_failed(self, reason: str):
+        self.status = "failed"
+        self.failure_reason = reason
+        self.ended_at = time.time()
+        for agent in self.agents:
+            if agent.get("status") not in ("completed", "failed"):
+                agent["status"] = "failed"
+        self.save()

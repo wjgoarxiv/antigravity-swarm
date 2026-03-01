@@ -54,6 +54,15 @@ logs/
 subagents.yaml
 *.bak
 
+# Local env / secrets
+.env
+.env.*
+!.env.example
+
+# Local agent-specific instruction files
+GEMINI.md
+CLAUDE.md
+
 # IDE
 .vscode/
 .idea/

@@ -30,6 +30,7 @@ def generate_report(mission_id=None):
     # Load audit
     audit = AuditLog(mission.mission_id)
     summary = audit.get_summary()
+    timeline = audit.get_timeline(limit=10)
 
     # Calculate duration
     duration = time.time() - mission.started_at
@@ -46,6 +47,8 @@ def generate_report(mission_id=None):
     print("=" * 60)
     print(f"  Mission:  {mission.description}")
     print(f"  Status:   {mission.status}")
+    if getattr(mission, "failure_reason", ""):
+        print(f"  Reason:   {mission.failure_reason}")
     print(f"  Duration: {format_duration(duration)}")
     print(f"  Agents:   {total} ({completed} succeeded, {failed} failed)")
     print(f"  Attempts: {mission.attempt}")
@@ -72,13 +75,26 @@ def generate_report(mission_id=None):
     if summary["errors"]:
         print(f"  Errors: {summary['errors']}")
 
+    if summary.get("failure_classes"):
+        print("  Failure Classes:")
+        for cls_name, count in sorted(summary["failure_classes"].items(), key=lambda kv: (-kv[1], kv[0])):
+            print(f"    - {cls_name}: {count}")
+
+    if timeline:
+        print("  Recent Timeline:")
+        for item in timeline:
+            ts_str = time.strftime("%H:%M:%S", time.localtime(item["ts"]))
+            fc = f" [{item['failure_class']}]" if item.get("failure_class") else ""
+            print(f"    - {ts_str} {item['agent']}::{item['event']}{fc}")
+
     print(f"  Audit Trail: {audit.log_file}")
     print("=" * 60)
     print()
 
 def main():
-    if hasattr(sys.stdout, 'reconfigure'):
-        sys.stdout.reconfigure(encoding='utf-8')
+    reconfigure = getattr(sys.stdout, 'reconfigure', None)
+    if callable(reconfigure):
+        reconfigure(encoding='utf-8')
 
     mission_id = sys.argv[1] if len(sys.argv) > 1 else None
     generate_report(mission_id)

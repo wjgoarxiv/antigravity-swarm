@@ -16,6 +16,9 @@ import re
 import subprocess
 import time
 import json
+import signal
+import select
+from typing import Optional
 
 # Allow standalone execution: add project root to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -24,6 +27,20 @@ from scripts.core.config import get_gemini_path, SwarmConfig, ensure_dirs
 from scripts.core.types import AgentStatus, MessageType, AgentIdentity
 from scripts.core.mailbox import Mailbox
 from scripts.core.audit import AuditLog
+
+
+MAX_STREAM_BUFFER_CHARS = 262144
+MAX_STREAM_TRIM_CHARS = 131072
+MAX_TAG_CONTENT_CHARS = 1048576
+MAX_MESSAGE_CHARS = 65536
+REQUIRED_PROMPT_SECTIONS = (
+    "1. TASK",
+    "2. EXPECTED OUTCOME",
+    "3. REQUIRED TOOLS",
+    "4. MUST DO",
+    "5. MUST NOT DO",
+    "6. CONTEXT",
+)
 
 
 # ---------------------------------------------------------------------------
@@ -84,13 +101,26 @@ class AgentLifecycle:
 
     # -- Public API ---------------------------------------------------------
 
-    def run(self, initial_task: str, gemini_path: str, model: str, log_file: str = None):
+    def run(
+        self,
+        initial_task: str,
+        gemini_path: str,
+        model: str,
+        log_file: Optional[str] = None,
+        exit_on_idle: bool = False,
+    ):
         """Full lifecycle: execute task, enter idle, poll inbox, handle messages."""
         self.status = AgentStatus.RUNNING
         self.audit.record(self.identity.name, "status_change", "running")
 
         # Execute the initial task
         self._execute_task(initial_task, gemini_path, model, log_file)
+
+        if exit_on_idle:
+            self.status = AgentStatus.COMPLETED
+            self.audit.record(self.identity.name, "status_change", "completed")
+            self._notify_leader("__AGENT_COMPLETED__: initial_task")
+            return
 
         # Enter idle state and poll for messages
         self.status = AgentStatus.IDLE
@@ -99,9 +129,18 @@ class AgentLifecycle:
 
         # Poll loop
         poll_interval = self.config.poll_interval_ms / 1000.0
+        try:
+            idle_timeout_seconds = float(os.environ.get("AG_SWARM_AGENT_IDLE_TIMEOUT_SECONDS", "120"))
+        except ValueError:
+            idle_timeout_seconds = 120.0
+        idle_timeout_seconds = max(0.0, idle_timeout_seconds)
+        idle_started_at = time.time()
+        last_cleanup = time.time()
         while self.status == AgentStatus.IDLE:
             self.mailbox.write_heartbeat()
             messages = self.mailbox.poll()
+            if messages:
+                idle_started_at = time.time()
             for msg in messages:
                 self.audit.record(
                     self.identity.name, "message_received",
@@ -120,16 +159,48 @@ class AgentLifecycle:
                     self.status = AgentStatus.IDLE
                     self.audit.record(self.identity.name, "status_change", "idle")
                     self._notify_leader(f"Follow-up task from {msg.sender} completed.")
+
+            if idle_timeout_seconds > 0 and (time.time() - idle_started_at) >= idle_timeout_seconds:
+                self.status = AgentStatus.COMPLETED
+                self.audit.record(
+                    self.identity.name,
+                    "status_change",
+                    "completed (idle_timeout)",
+                )
+                self._notify_leader("__AGENT_COMPLETED__: idle_timeout")
+                return
+
+            now = time.time()
+            if now - last_cleanup >= 300:
+                try:
+                    self.mailbox.cleanup_processed(max_age_seconds=86400)
+                except Exception as e:
+                    self.audit.record(
+                        self.identity.name,
+                        "error",
+                        "mailbox_cleanup_failed",
+                        {"detail": str(e)[:200]},
+                    )
+                last_cleanup = now
             time.sleep(poll_interval)
 
     # -- Task execution -----------------------------------------------------
 
-    def _execute_task(self, task: str, gemini_path: str, model: str, log_file: str = None):
+    def _execute_task(self, task: str, gemini_path: str, model: str, log_file: Optional[str] = None):
         """Execute a single task via Gemini subprocess with streaming parse."""
         shim_instruction = self._build_shim_instruction()
-        full_prompt = f"{shim_instruction}{task}"
+        contracted_task = self._ensure_prompt_contract(task)
+        full_prompt = f"{shim_instruction}{contracted_task}"
 
-        cmd = [gemini_path, "chat", "--model", model, full_prompt]
+        cmd = [
+            gemini_path,
+            "--model",
+            model,
+            "--prompt",
+            full_prompt,
+            "--output-format",
+            "text",
+        ]
         process = subprocess.Popen(
             cmd,
             stdout=subprocess.PIPE,
@@ -145,11 +216,46 @@ class AgentLifecycle:
             os.makedirs(os.path.dirname(os.path.abspath(log_file)), exist_ok=True)
             log_handle = open(log_file, 'a', encoding='utf-8')
 
+        stdout = process.stdout
+        stderr = process.stderr
+        try:
+            task_timeout_seconds = float(os.environ.get("AG_SWARM_TASK_TIMEOUT_SECONDS", "240"))
+        except ValueError:
+            task_timeout_seconds = 240.0
+        task_timeout_seconds = max(0.0, task_timeout_seconds)
+        task_started_at = time.time()
+
         try:
             while True:
-                line = process.stdout.readline()
-                if not line and process.poll() is not None:
+                if task_timeout_seconds > 0 and (time.time() - task_started_at) >= task_timeout_seconds:
+                    process.terminate()
+                    try:
+                        process.wait(timeout=5)
+                    except subprocess.TimeoutExpired:
+                        process.kill()
+                    self.audit.record(
+                        self.identity.name,
+                        "error",
+                        "task_execution_timeout",
+                        {"timeout_seconds": round(task_timeout_seconds, 2), "failure_class": "timeout_error"},
+                    )
                     break
+
+                if stdout is None:
+                    break
+
+                ready, _, _ = select.select([stdout], [], [], 0.2)
+                if not ready:
+                    if process.poll() is not None:
+                        break
+                    continue
+
+                line = stdout.readline()
+                if not line:
+                    if process.poll() is not None:
+                        break
+                    continue
+
                 if line:
                     print(line.strip())
                     if log_handle:
@@ -159,11 +265,32 @@ class AgentLifecycle:
                     # Stream-parse: execute any complete tag pairs immediately
                     buffer = self._parse_streaming(buffer)
 
+                    if len(buffer) > MAX_STREAM_BUFFER_CHARS:
+                        cut_idx = buffer.rfind("<<", -MAX_STREAM_TRIM_CHARS)
+                        if cut_idx == -1:
+                            cut_idx = len(buffer) - MAX_STREAM_TRIM_CHARS
+                        dropped = cut_idx if cut_idx > 0 else 0
+                        if dropped > 0:
+                            self.audit.record(
+                                self.identity.name,
+                                "warning",
+                                "stream_buffer_trimmed",
+                                {"dropped_chars": dropped},
+                            )
+                            buffer = buffer[cut_idx:]
+
             # Final parse for any remaining complete tags
-            self._parse_streaming(buffer, final=True)
+            tail = self._parse_streaming(buffer, final=True)
+            if tail.strip():
+                self.audit.record(
+                    self.identity.name,
+                    "warning",
+                    "stream_tail_unparsed",
+                    {"tail_chars": len(tail)},
+                )
 
             if process.returncode != 0:
-                stderr_output = process.stderr.read()
+                stderr_output = stderr.read() if stderr else ""
                 self.audit.record(
                     self.identity.name, "error",
                     f"Process exited with code {process.returncode}",
@@ -200,6 +327,25 @@ class AgentLifecycle:
             "Now, perform the following task:\n"
         )
 
+    def _ensure_prompt_contract(self, task_text: str) -> str:
+        if all(section in task_text for section in REQUIRED_PROMPT_SECTIONS):
+            return task_text
+
+        return (
+            "1. TASK\n"
+            f"{task_text}\n\n"
+            "2. EXPECTED OUTCOME\n"
+            "Deliver concrete outputs and verification notes.\n\n"
+            "3. REQUIRED TOOLS\n"
+            "Use only necessary tools and report key tool outcomes.\n\n"
+            "4. MUST DO\n"
+            "Preserve existing behavior and validate before completion.\n\n"
+            "5. MUST NOT DO\n"
+            "No destructive actions and no fabricated results.\n\n"
+            "6. CONTEXT\n"
+            f"Agent: {self.identity.name}. Team: {self.identity.team_name}."
+        )
+
     # -- Streaming side-effect parser ---------------------------------------
 
     def _parse_streaming(self, buffer: str, final: bool = False) -> str:
@@ -224,6 +370,14 @@ class AgentLifecycle:
         for match in write_pat.finditer(buffer):
             path = match.group(1)
             content = match.group(2).strip()
+            if len(content) > MAX_TAG_CONTENT_CHARS:
+                self.audit.record(
+                    self.identity.name,
+                    "error",
+                    "write_file_payload_too_large",
+                    {"path": path, "size": len(content)},
+                )
+                continue
             if content.startswith('\n'):
                 content = content[1:]
             if content.endswith('\n'):
@@ -251,6 +405,14 @@ class AgentLifecycle:
         )
         for match in run_pat.finditer(buffer):
             command = match.group(1).strip()
+            if len(command) > MAX_TAG_CONTENT_CHARS:
+                self.audit.record(
+                    self.identity.name,
+                    "error",
+                    "run_command_payload_too_large",
+                    {"size": len(command)},
+                )
+                continue
             print(f"[Shim] Executing command: {command}")
             try:
                 result = subprocess.run(
@@ -278,6 +440,14 @@ class AgentLifecycle:
         for match in msg_pat.finditer(buffer):
             recipient = match.group(1)
             content = match.group(2).strip()
+            if len(content) > MAX_MESSAGE_CHARS:
+                self.audit.record(
+                    self.identity.name,
+                    "error",
+                    "direct_message_too_large",
+                    {"to": recipient, "size": len(content)},
+                )
+                continue
             try:
                 self.mailbox.send(recipient, MessageType.DIRECT, content)
                 print(f"[Shim] Sent message to {recipient}")
@@ -299,6 +469,14 @@ class AgentLifecycle:
         )
         for match in bcast_pat.finditer(buffer):
             content = match.group(1).strip()
+            if len(content) > MAX_MESSAGE_CHARS:
+                self.audit.record(
+                    self.identity.name,
+                    "error",
+                    "broadcast_message_too_large",
+                    {"size": len(content)},
+                )
+                continue
             all_agents = self._discover_team_agents()
             if all_agents:
                 self.mailbox.broadcast(all_agents, MessageType.BROADCAST, content)
@@ -311,6 +489,19 @@ class AgentLifecycle:
             else:
                 print("[Shim] Broadcast skipped: no team agents discovered")
         buffer = bcast_pat.sub('', buffer)
+
+        if final:
+            orphan_markers = [
+                "<<WRITE_FILE", "<<RUN_COMMAND>>", "<<SEND_MESSAGE", "<<BROADCAST>>"
+            ]
+            orphaned = [m for m in orphan_markers if m in buffer]
+            if orphaned:
+                self.audit.record(
+                    self.identity.name,
+                    "warning",
+                    "stream_orphan_tags",
+                    {"markers": orphaned, "tail_chars": len(buffer)},
+                )
 
         return buffer
 
@@ -380,8 +571,9 @@ def _extract_arg(args: list, flag: str):
 # ---------------------------------------------------------------------------
 
 def main():
-    if hasattr(sys.stdout, 'reconfigure'):
-        sys.stdout.reconfigure(encoding='utf-8')
+    reconfigure = getattr(sys.stdout, 'reconfigure', None)
+    if callable(reconfigure):
+        reconfigure(encoding='utf-8')
 
     if len(sys.argv) < 2:
         print("Usage: python3 dispatch_agent.py <task_description> [options]")
@@ -390,6 +582,7 @@ def main():
         print("  --model <name>       Model name (default: auto-gemini-3)")
         print("  --agent-id <id>      Agent identity (e.g., oracle@mission)")
         print("  --team-dir <dir>     Team directory (default: .swarm)")
+        print("  --exit-on-idle       Exit after initial task (no idle poll loop)")
         print("  --watch              Stream raw output to stdout")
         sys.exit(1)
 
@@ -406,7 +599,15 @@ def main():
     if watch_mode:
         args.remove("--watch")
 
+    exit_on_idle = "--exit-on-idle" in args
+    if exit_on_idle:
+        args.remove("--exit-on-idle")
+
     task = " ".join(args)
+
+    if not task.strip():
+        print("[Dispatch][Hook:PreRunValidation] FAILED (empty_task)")
+        sys.exit(1)
 
     # Resolve Gemini CLI
     gemini_path = get_gemini_path()
@@ -431,6 +632,10 @@ def main():
         name = agent_id_str or "agent"
         team = "default"
 
+    if "@" in name or "@" in team:
+        print("[Dispatch][Hook:PreRunValidation] FAILED (invalid_identity_format)")
+        sys.exit(1)
+
     identity = AgentIdentity(name=name, team_name=team)
 
     # Set up mailbox and audit
@@ -446,7 +651,25 @@ def main():
 
     # Run with lifecycle
     lifecycle = AgentLifecycle(identity, mailbox, audit, config)
-    lifecycle.run(task, gemini_path, model_name, log_file)
+
+    def _signal_handler(signum, _frame):
+        lifecycle.status = AgentStatus.FAILED
+        audit.record(
+            name,
+            "error",
+            "dispatcher_interrupted",
+            {"signal": int(signum), "failure_class": "interrupted"},
+        )
+        try:
+            mailbox.send("leader", MessageType.STATUS_UPDATE, f"Interrupted by signal {signum}.")
+        except Exception:
+            pass
+        raise SystemExit(1)
+
+    signal.signal(signal.SIGINT, _signal_handler)
+    signal.signal(signal.SIGTERM, _signal_handler)
+
+    lifecycle.run(task, gemini_path, model_name, log_file, exit_on_idle=exit_on_idle)
 
     # Exit based on final status
     if lifecycle.status == AgentStatus.FAILED:

@@ -2,6 +2,7 @@ import subprocess
 import shutil
 import os
 import time
+import shlex
 from typing import List, Optional, Any
 from scripts.core.backends.base import SpawnBackend
 
@@ -22,7 +23,7 @@ class TmuxBackend(SpawnBackend):
     SESSION_NAME = "antigravity-swarm"
 
     def __init__(self):
-        self.tmux_path = shutil.which("tmux")
+        self.tmux_path: str = shutil.which("tmux") or ""
         if not self.tmux_path:
             raise RuntimeError("tmux not found. Install tmux or use 'thread' backend.")
         self._panes = {}  # agent_name -> pane_id
@@ -72,7 +73,8 @@ class TmuxBackend(SpawnBackend):
                 "list-panes", "-t", self.SESSION_NAME,
                 "-F", "#{pane_id}",
                 capture=True
-            ).split('\n')[0]
+            )
+            pane_id = (pane_id or "").split('\n')[0]
 
         if pane_id:
             self._panes[agent_name] = pane_id
@@ -85,9 +87,12 @@ class TmuxBackend(SpawnBackend):
             self._run_tmux("select-pane", "-t", pane_id,
                           "-P", f"fg={tmux_color}")
 
+            self._run_tmux("set-option", "-p", "-t", pane_id, "remain-on-exit", "on")
+
             # Send command to pane
-            cmd_str = " ".join(f'"{c}"' if " " in c else c for c in command)
-            self._run_tmux("send-keys", "-t", pane_id, cmd_str, "Enter")
+            cmd_str = " ".join(shlex.quote(c) for c in command)
+            wrapped_cmd = f"{cmd_str}; __ag_status=$?; exit $__ag_status"
+            self._run_tmux("send-keys", "-t", pane_id, wrapped_cmd, "Enter")
 
             # Rebalance
             self.rebalance()
@@ -115,10 +120,39 @@ class TmuxBackend(SpawnBackend):
         if not pane_id:
             return False
 
-        # Check if pane still exists
-        result = self._run_tmux("list-panes", "-t", self.SESSION_NAME,
-                               "-F", "#{pane_id}", capture=True)
-        return pane_id in (result or "")
+        result = self._run_tmux(
+            "list-panes",
+            "-t",
+            self.SESSION_NAME,
+            "-F",
+            "#{pane_id} #{pane_dead}",
+            capture=True,
+        )
+        for row in (result or "").splitlines():
+            parts = row.split()
+            if len(parts) >= 2 and parts[0] == pane_id:
+                return parts[1] == "0"
+        return False
+
+    def is_alive_many(self, agent_names: List[str]) -> dict:
+        result = self._run_tmux(
+            "list-panes",
+            "-t",
+            self.SESSION_NAME,
+            "-F",
+            "#{pane_id} #{pane_dead}",
+            capture=True,
+        )
+        pane_state = {}
+        for row in (result or "").splitlines():
+            parts = row.split()
+            if len(parts) >= 2:
+                pane_state[parts[0]] = parts[1] == "0"
+        out = {}
+        for name in agent_names:
+            pane_id = self._panes.get(name)
+            out[name] = bool(pane_id and pane_state.get(pane_id, False))
+        return out
 
     def rebalance(self):
         """Rebalance panes in tiled layout."""
@@ -149,6 +183,30 @@ class TmuxBackend(SpawnBackend):
     def get_pane_id(self, agent_name: str) -> Optional[str]:
         """Get the tmux pane ID for an agent."""
         return self._panes.get(agent_name)
+
+    def get_return_code(self, agent_name: str) -> Optional[int]:
+        pane_id = self._panes.get(agent_name)
+        if not pane_id:
+            return None
+
+        result = self._run_tmux(
+            "list-panes",
+            "-t",
+            self.SESSION_NAME,
+            "-F",
+            "#{pane_id} #{pane_dead} #{pane_dead_status}",
+            capture=True,
+        )
+        for row in (result or "").splitlines():
+            parts = row.split()
+            if len(parts) >= 3 and parts[0] == pane_id:
+                if parts[1] != "1":
+                    return None
+                try:
+                    return int(parts[2])
+                except ValueError:
+                    return None
+        return None
 
     @staticmethod
     def is_available() -> bool:

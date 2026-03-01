@@ -8,12 +8,78 @@ import re
 import os
 import json
 import time
+import yaml
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from scripts.core.config import get_gemini_path, SwarmConfig, ensure_dirs, STATE_DIR
 from scripts.core.types import AgentIdentity, assign_color
 
 CONFIG_FILE = "subagents.yaml"
+REQUIRED_PROMPT_SECTIONS = (
+    "1. TASK",
+    "2. EXPECTED OUTCOME",
+    "3. REQUIRED TOOLS",
+    "4. MUST DO",
+    "5. MUST NOT DO",
+    "6. CONTEXT",
+)
+
+
+def build_prompt_contract(role_name, role_prompt, mission):
+    return (
+        f"{role_prompt}\n\n"
+        "1. TASK\n"
+        f"Complete your role-specific objective for mission: {mission}\n\n"
+        "2. EXPECTED OUTCOME\n"
+        "Provide concrete deliverables and clear completion criteria.\n\n"
+        "3. REQUIRED TOOLS\n"
+        "Use only the minimum necessary tools and report what was used.\n\n"
+        "4. MUST DO\n"
+        "Preserve existing behavior, validate outputs, and log key decisions.\n\n"
+        "5. MUST NOT DO\n"
+        "No destructive actions, no fabricated results, no silent assumptions.\n\n"
+        "6. CONTEXT\n"
+        f"Role: {role_name}. Mission: {mission}."
+    )
+
+
+def validate_subagent_yaml(yaml_content):
+    try:
+        parsed = yaml.safe_load(yaml_content)
+    except Exception as e:
+        return False, [f"invalid_yaml: {e}"]
+
+    errors = []
+    subagents = parsed.get("subagents") if isinstance(parsed, dict) else None
+    if not isinstance(subagents, list) or not subagents:
+        errors.append("missing_subagents")
+        return False, errors
+
+    has_validator = False
+    for idx, agent in enumerate(subagents):
+        if not isinstance(agent, dict):
+            errors.append(f"agent_{idx}_not_object")
+            continue
+        for key in ("name", "description", "color", "model", "mode", "prompt"):
+            if key not in agent:
+                errors.append(f"agent_{idx}_missing_{key}")
+
+        name = str(agent.get("name", ""))
+        mode = str(agent.get("mode", ""))
+        if name == "Quality_Validator":
+            has_validator = True
+            if mode != "validator":
+                errors.append("quality_validator_mode_must_be_validator")
+
+        prompt = str(agent.get("prompt", ""))
+        for section in REQUIRED_PROMPT_SECTIONS:
+            if section not in prompt:
+                errors.append(f"agent_{idx}_prompt_missing_section:{section}")
+
+    if not has_validator:
+        errors.append("missing_quality_validator")
+
+    return len(errors) == 0, errors
 
 # --- OH-MY-OPENCODE AGENT POOL ---
 AGENT_POOL = {
@@ -104,6 +170,13 @@ Your goal is to hire a squad of specialized sub-agents from the **Oh-My-Opencode
    - 'parallel' (default): For agents that can work simultaneously.
    - 'serial': For agents that must wait for others (e.g., summarizers, aggregators).
 5. Use the specific prompts provided below for each role, but **customize them** slightly to fit the specific mission context.
+6. Every agent prompt MUST include these exact sections:
+   - 1. TASK
+   - 2. EXPECTED OUTCOME
+   - 3. REQUIRED TOOLS
+   - 4. MUST DO
+   - 5. MUST NOT DO
+   - 6. CONTEXT
 
 **Output Format:**
 Please output ONE single YAML block enclosed in triple backticks (```yaml).
@@ -166,6 +239,7 @@ def generate_from_preset(preset, mission):
         color = info.get("color", assign_color(i))
         model = info.get("model", "auto-gemini-3")
         base_prompt = info.get("prompt", f"You are {name}.")
+        contract_prompt = build_prompt_contract(name, base_prompt, mission)
 
         lines.append(f'  - name: "{name}"')
         lines.append(f'    description: "{info.get("description", name)}"')
@@ -173,8 +247,8 @@ def generate_from_preset(preset, mission):
         lines.append(f'    model: "{model}"')
         lines.append(f'    mode: "{mode}"')
         lines.append(f'    prompt: |')
-        lines.append(f'      {base_prompt}')
-        lines.append(f'      Mission: {mission}')
+        for p_line in contract_prompt.splitlines():
+            lines.append(f'      {p_line}')
         lines.append('')
     return "\n".join(lines)
 
@@ -233,8 +307,9 @@ def _save_config_and_team(yaml_content, plan_content, mission):
 
 def main():
     # Fix for Windows CP949 encoding issue
-    if hasattr(sys.stdout, 'reconfigure'):
-        sys.stdout.reconfigure(encoding='utf-8')
+    reconfigure = getattr(sys.stdout, 'reconfigure', None)
+    if callable(reconfigure):
+        reconfigure(encoding='utf-8')
 
     if len(sys.argv) < 2:
         print("Usage: python3 scripts/planner.py <mission_description>")
@@ -253,6 +328,8 @@ def main():
             sys.exit(1)
     else:
         args = sys.argv[1:]
+
+    args = [a for a in args if a != "--yes"]
 
     mission = " ".join(args)
     print(f"[Planner] Analyzing mission: '{mission}'...")
@@ -284,6 +361,12 @@ def main():
                     sys.exit(0)
 
             # Save artifacts and generate team config (shared code path)
+            ok, errors = validate_subagent_yaml(yaml_content)
+            if not ok:
+                print("[Planner][Hook:PostPlanValidation] FAILED")
+                for e in errors:
+                    print(f"  - {e}")
+                sys.exit(1)
             _save_config_and_team(yaml_content, plan_content, mission)
             sys.exit(0)
         else:
@@ -329,6 +412,13 @@ def main():
             # ----------------------------------
 
             plan_content = plan_match.group(1).strip() if plan_match else "# Task Plan (Auto-Generated)\n- [ ] Review Mission"
+
+            ok, errors = validate_subagent_yaml(yaml_content)
+            if not ok:
+                print("[Planner][Hook:PostPlanValidation] FAILED")
+                for e in errors:
+                    print(f"  - {e}")
+                sys.exit(1)
             
             # Plan Mode (Confirmation)
             print("\n[Planner] Proposed Plan:")

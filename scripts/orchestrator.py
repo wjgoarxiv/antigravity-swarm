@@ -36,7 +36,7 @@ from rich import box
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from scripts.core.config import get_gemini_path, SwarmConfig, ensure_dirs, STATE_DIR
-from scripts.core.types import AgentStatus, AgentIdentity, assign_color
+from scripts.core.types import AgentStatus, AgentIdentity, MessageType, assign_color
 from scripts.core.mailbox import Mailbox, get_all_messages
 from scripts.core.audit import AuditLog
 from scripts.core.mission import MissionState
@@ -51,6 +51,14 @@ CONFIG_FILE = "subagents.yaml"
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 DISPATCH_SCRIPT = os.path.join(SCRIPT_DIR, "dispatch_agent.py")
 SPINNERS = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"]
+REQUIRED_PROMPT_SECTIONS = (
+    "1. TASK",
+    "2. EXPECTED OUTCOME",
+    "3. REQUIRED TOOLS",
+    "4. MUST DO",
+    "5. MUST NOT DO",
+    "6. CONTEXT",
+)
 
 
 # ---------------------------------------------------------------------------
@@ -93,7 +101,7 @@ class KeyboardListener:
                     if ch == '\x1b':  # Escape sequence
                         if select.select([sys.stdin], [], [], 0.05)[0]:
                             ch2 = sys.stdin.read(1)
-                            if ch2 == '[':
+                            if ch2 in ('[', 'O'):
                                 ch3 = sys.stdin.read(1)
                                 if ch3 == 'A':
                                     self._queue.append('up')
@@ -161,6 +169,14 @@ class SubAgentRunner:
         self.msg_count = {"sent": 0, "recv": 0}
         self.backend_info = "-"
         self.team_name = team_name
+        self.last_progress_at = time.time()
+        self.last_heartbeat_at = 0.0
+        self.retry_count = 0
+        self.failure_reason = "pending"
+        self.retryable = False
+        self.stop_mode = "none"
+        self.stop_requested_at = 0.0
+        self.saw_completion_signal = False
         self.identity = AgentIdentity(
             name=name, team_name=team_name, color=color, model=model, mode=mode
         )
@@ -178,6 +194,8 @@ class SubAgentRunner:
             "--agent-id", agent_id,
             "--team-dir", STATE_DIR,
         ]
+        if self.mode in ("serial", "validator"):
+            cmd.append("--exit-on-idle")
         return cmd
 
     def run(self):
@@ -211,10 +229,18 @@ class SubAgentRunner:
 
         for step in steps:
             self.last_log = step
+            self.last_progress_at = time.time()
             time.sleep(random.uniform(0.5, 1.5))
 
-        # 90% chance of success, 10% failure for demo realism
-        if random.random() > 0.1:
+        demo_fail_rate = 0.0
+        env_fail_rate = os.environ.get("AG_SWARM_DEMO_FAIL_RATE")
+        if env_fail_rate:
+            try:
+                demo_fail_rate = max(0.0, min(1.0, float(env_fail_rate)))
+            except ValueError:
+                demo_fail_rate = 0.0
+
+        if random.random() >= demo_fail_rate:
             self.status = AgentStatus.COMPLETED.value
             self.last_log = "Task completed successfully."
         else:
@@ -263,6 +289,7 @@ class SubAgentRunner:
                     last_line = lines[-1].strip()
                     if last_line:
                         self.last_log = last_line
+                        self.last_progress_at = time.time()
             except Exception:
                 pass
 
@@ -370,10 +397,10 @@ def render_dashboard(runners, spinner_idx, selected_idx, backend, show_help):
     # --- Footer (keybinds) ---
     footer_text = Text.assemble(
         (" [Tab] ", "bold white on dark_blue"), ("View  ", "dim"),
-        (" [↑↓] ", "bold white on dark_blue"), ("Select  ", "dim"),
+        (" [w,s] ", "bold white on dark_blue"), ("Select  ", "dim"),
         (" [Enter] ", "bold white on dark_blue"), ("Detail  ", "dim"),
         (" [k] ", "bold white on dark_blue"), ("Kill  ", "dim"),
-        (" [s] ", "bold white on dark_blue"), ("Shutdown  ", "dim"),
+        (" [x] ", "bold white on dark_blue"), ("Shutdown  ", "dim"),
         (" [q] ", "bold white on dark_blue"), ("Quit  ", "dim"),
         (" [?] ", "bold white on dark_blue"), ("Help", "dim"),
     )
@@ -385,13 +412,13 @@ def render_dashboard(runners, spinner_idx, selected_idx, backend, show_help):
         help_text.append("Keyboard Controls\n\n", style="bold underline cyan")
         help_text.append("  Tab       ", style="bold white")
         help_text.append("Cycle views (Dashboard / Messages / Detail)\n", style="dim")
-        help_text.append("  ↑ / ↓     ", style="bold white")
+        help_text.append("  w / s      ", style="bold white")
         help_text.append("Navigate agent list\n", style="dim")
         help_text.append("  Enter     ", style="bold white")
         help_text.append("Show selected agent detail\n", style="dim")
         help_text.append("  k         ", style="bold white")
         help_text.append("Kill selected agent\n", style="dim")
-        help_text.append("  s         ", style="bold white")
+        help_text.append("  x         ", style="bold white")
         help_text.append("Send shutdown request to selected agent\n", style="dim")
         help_text.append("  q         ", style="bold white")
         help_text.append("Quit (shutdown all agents)\n", style="dim")
@@ -435,12 +462,13 @@ def render_dashboard(runners, spinner_idx, selected_idx, backend, show_help):
     return layout
 
 
-def render_messages_view():
+def render_messages_view(messages=None):
     """Render the messages view showing all inter-agent communication.
 
     Returns a Panel renderable.
     """
-    messages = get_all_messages()
+    if messages is None:
+        messages = get_all_messages()
 
     content = Text()
     content.append("Inter-Agent Messages\n\n", style="bold underline cyan")
@@ -471,7 +499,26 @@ def render_messages_view():
     )
 
 
-def render_detail_view(runner):
+def read_log_tail(log_file, max_lines=20, max_bytes=65536):
+    if not os.path.exists(log_file):
+        return []
+
+    try:
+        with open(log_file, 'rb') as f:
+            f.seek(0, os.SEEK_END)
+            size = f.tell()
+            read_size = min(size, max_bytes)
+            f.seek(size - read_size, os.SEEK_SET)
+            chunk = f.read(read_size)
+
+        text = chunk.decode('utf-8', errors='replace')
+        lines = text.splitlines()
+        return lines[-max_lines:] if len(lines) > max_lines else lines
+    except Exception:
+        return []
+
+
+def render_detail_view(runner, all_msgs=None, log_tail=None):
     """Render the detail view for a single agent.
 
     Shows identity, status, duration, log tail, and message history.
@@ -494,13 +541,12 @@ def render_detail_view(runner):
     # -- Log tail --
     content.append("Log Output (last 20 lines)\n", style="bold underline cyan")
     if os.path.exists(runner.log_file):
-        try:
-            with open(runner.log_file, 'r', encoding='utf-8', errors='replace') as f:
-                lines = f.readlines()
-            tail = lines[-20:] if len(lines) > 20 else lines
-            for line in tail:
+        if log_tail is None:
+            log_tail = read_log_tail(runner.log_file, max_lines=20)
+        if log_tail:
+            for line in log_tail:
                 content.append(f"  {line.rstrip()}\n", style="white")
-        except Exception:
+        else:
             content.append("  [Could not read log file]\n", style="dim italic")
     else:
         content.append("  [No log file yet]\n", style="dim italic")
@@ -509,7 +555,8 @@ def render_detail_view(runner):
 
     # -- Message history for this agent --
     content.append("Message History\n", style="bold underline cyan")
-    all_msgs = get_all_messages()
+    if all_msgs is None:
+        all_msgs = get_all_messages()
     agent_msgs = [
         m for m in all_msgs
         if m.sender == runner.name or m.recipient == runner.name
@@ -544,14 +591,57 @@ def render_detail_view(runner):
 
 def main():
     # Fix encoding (Windows CP949 / etc.)
-    if hasattr(sys.stdout, 'reconfigure'):
-        sys.stdout.reconfigure(encoding='utf-8')
+    reconfigure = getattr(sys.stdout, 'reconfigure', None)
+    if callable(reconfigure):
+        reconfigure(encoding='utf-8')
 
     demo_mode = "--demo" in sys.argv
     resume_mode = "--resume" in sys.argv
+    cleanup_stale_mode = "--cleanup-stale" in sys.argv
+
+    mission_id_override = None
+    if "--mission-id" in sys.argv:
+        try:
+            idx = sys.argv.index("--mission-id")
+            mission_id_override = sys.argv[idx + 1] if idx + 1 < len(sys.argv) else None
+        except Exception:
+            mission_id_override = None
 
     if demo_mode:
         print("[Orchestrator] Running in DEMO MODE (Simulated Execution)")
+
+    def fail_with_hook(stage, code, detail):
+        print(f"[Orchestrator][Hook:{stage}] FAILED ({code})")
+        print(f"  {detail}")
+        sys.exit(1)
+
+    def validate_config_data(data):
+        errors = []
+        if not isinstance(data, dict):
+            return ["config_not_object"]
+        subagents = data.get("subagents")
+        if not isinstance(subagents, list) or not subagents:
+            return ["missing_subagents"]
+
+        has_validator = False
+        for i, agent in enumerate(subagents):
+            if not isinstance(agent, dict):
+                errors.append(f"agent_{i}_not_object")
+                continue
+            for key in ("name", "prompt", "mode", "model"):
+                if key not in agent:
+                    errors.append(f"agent_{i}_missing_{key}")
+            if agent.get("name") == "Quality_Validator":
+                has_validator = True
+
+            prompt = str(agent.get("prompt", ""))
+            for section in REQUIRED_PROMPT_SECTIONS:
+                if section not in prompt:
+                    errors.append(f"agent_{i}_prompt_missing_section:{section}")
+
+        if not has_validator:
+            errors.append("missing_quality_validator")
+        return errors
 
     # Load swarm config
     config = SwarmConfig.load()
@@ -562,19 +652,40 @@ def main():
 
     # Resume logic
     mission = None
+    try:
+        resume_stale_seconds = float(os.environ.get("AG_SWARM_RESUME_STALE_SECONDS", "1800"))
+    except ValueError:
+        resume_stale_seconds = 1800.0
+    resume_stale_seconds = max(0.0, resume_stale_seconds)
+
     if resume_mode:
-        mission = MissionState.latest()
+        mission = MissionState.load(mission_id_override) if mission_id_override else MissionState.latest()
         if not mission or not mission.is_resumable():
             print("[Orchestrator] No resumable mission found.")
+            sys.exit(1)
+        if mission.is_stale(resume_stale_seconds):
+            mission.mark_failed("stale_resume_timeout")
+            print("[Orchestrator] Latest mission is stale and was marked failed.")
             sys.exit(1)
         print(f"[Orchestrator] Resuming mission: {mission.description}")
         mission.attempt += 1
         mission.save()
 
+    if cleanup_stale_mode:
+        latest = MissionState.load(mission_id_override) if mission_id_override else MissionState.latest()
+        if not latest:
+            print("[Orchestrator] No mission found for stale cleanup.")
+            return
+        if latest.is_resumable() and latest.is_stale(resume_stale_seconds):
+            latest.mark_failed("stale_cleanup")
+            print(f"[Orchestrator] Marked stale mission as failed: {latest.mission_id}")
+        else:
+            print("[Orchestrator] No stale resumable mission to clean.")
+        return
+
     # Read config file
     if not os.path.exists(CONFIG_FILE) and not demo_mode:
-        print(f"Error: {CONFIG_FILE} not found.")
-        sys.exit(1)
+        fail_with_hook("PreRunValidation", "missing_config", f"{CONFIG_FILE} not found")
 
     if demo_mode:
         config_data = {
@@ -596,6 +707,14 @@ def main():
     else:
         with open(CONFIG_FILE, 'r', encoding='utf-8') as f:
             config_data = yaml.safe_load(f)
+
+        validation_errors = validate_config_data(config_data)
+        if validation_errors:
+            fail_with_hook(
+                "PreRunValidation",
+                "invalid_subagent_config",
+                ", ".join(validation_errors[:8]),
+            )
 
         # Manus Protocol: Context Injection
         manus_context = "\n\n[SHARED STATE]"
@@ -719,23 +838,253 @@ def main():
     show_help = False
     quit_requested = False
 
+    try:
+        max_retries = int(os.environ.get("AG_SWARM_MAX_RETRIES", "1"))
+    except ValueError:
+        max_retries = 1
+    max_retries = max(0, min(max_retries, 5))
+
+    try:
+        watchdog_timeout = float(os.environ.get("AG_SWARM_WATCHDOG_SECONDS", "90"))
+    except ValueError:
+        watchdog_timeout = 90.0
+    watchdog_timeout = max(10.0, watchdog_timeout)
+
+    try:
+        retry_cooldown = float(os.environ.get("AG_SWARM_RETRY_COOLDOWN_SECONDS", "0.3"))
+    except ValueError:
+        retry_cooldown = 0.3
+    retry_cooldown = max(0.0, retry_cooldown)
+
+    try:
+        hard_timeout_seconds = float(os.environ.get("AG_SWARM_HARD_TIMEOUT_SECONDS", "0"))
+    except ValueError:
+        hard_timeout_seconds = 0.0
+    hard_timeout_seconds = max(0.0, hard_timeout_seconds)
+
+    try:
+        watchdog_grace = float(os.environ.get("AG_SWARM_WATCHDOG_GRACE_SECONDS", "15"))
+    except ValueError:
+        watchdog_grace = 15.0
+    watchdog_grace = max(3.0, watchdog_grace)
+
     console = Console()
+
+    def spawn_runner(r):
+        if demo_mode:
+            t = threading.Thread(target=r.run, daemon=True)
+            t.start()
+            r.backend_info = "demo"
+            return t
+
+        cmd = r.build_command()
+        handle = backend.spawn(r.name, cmd, r.color)
+        r.backend_info = (
+            f"{backend.get_type()} {handle}" if handle else backend.get_type()
+        )
+        r.is_running = True
+        r.status = AgentStatus.RUNNING.value
+        r.start_time = time.time()
+        r.last_progress_at = time.time()
+        r.last_heartbeat_at = 0.0
+        r.failure_reason = ""
+        r.retryable = False
+        r.stop_mode = "none"
+        r.stop_requested_at = 0.0
+        r.saw_completion_signal = False
+        audit.record(
+            r.name,
+            "spawned",
+            f"mode={r.mode}",
+            {"backend": backend.get_type(), "retry": r.retry_count},
+        )
+        mission.update_agent_status(r.name, AgentStatus.RUNNING.value)
+        return handle
+
+    def maybe_retry_runner(r):
+        if quit_requested or demo_mode:
+            return False
+        if r.status != AgentStatus.FAILED.value:
+            return False
+        if not r.retryable:
+            return False
+        if r.retry_count >= max_retries:
+            return False
+
+        liveness_cache.pop(r.name, None)
+        try:
+            backend.kill(r.name)
+        except Exception:
+            pass
+
+        r.retry_count += 1
+        time.sleep(retry_cooldown)
+        audit.record(
+            r.name,
+            "status_change",
+            "retrying",
+            {"attempt": r.retry_count, "reason": r.failure_reason},
+        )
+        spawn_runner(r)
+        return True
+
+    def apply_watchdog(active_runners):
+        if demo_mode:
+            return
+        now = time.time()
+        for r in active_runners:
+            if not r.is_running:
+                continue
+            if r.mode in ("serial", "validator"):
+                continue
+            idle_for = now - r.last_progress_at
+            if idle_for >= watchdog_timeout:
+                if r.stop_mode == "watchdog_soft_shutdown":
+                    if now - r.stop_requested_at >= watchdog_grace:
+                        r.is_running = False
+                        r.end_time = now
+                        r.status = AgentStatus.FAILED.value
+                        r.failure_reason = "watchdog_timeout"
+                        r.retryable = True
+                        audit.record(
+                            r.name,
+                            "error",
+                            "watchdog_no_progress_timeout",
+                            {"idle_seconds": round(idle_for, 2), "failure_class": "timeout_error"},
+                        )
+                        mission.update_agent_status(r.name, r.status)
+                    continue
+
+                r.stop_mode = "watchdog_soft_shutdown"
+                r.stop_requested_at = now
+                try:
+                    leader_mailbox.send(
+                        r.name,
+                        MessageType.SHUTDOWN_REQUEST,
+                        "No progress detected. Please shutdown gracefully.",
+                    )
+                except Exception:
+                    pass
+                audit.record(
+                    r.name,
+                    "warning",
+                    "watchdog_soft_shutdown_requested",
+                    {"idle_seconds": round(idle_for, 2)},
+                )
+
+    def enforce_hard_timeout():
+        nonlocal quit_requested
+        if hard_timeout_seconds <= 0:
+            return False
+        elapsed = time.time() - mission.started_at
+        if elapsed < hard_timeout_seconds:
+            return False
+
+        quit_requested = True
+        mission.failure_reason = "hard_timeout"
+        now = time.time()
+        for r in runners:
+            if r.is_running:
+                r.is_running = False
+                r.end_time = now
+                r.status = AgentStatus.FAILED.value
+                r.failure_reason = "hard_timeout"
+                r.retryable = False
+                r.stop_mode = "hard_timeout"
+                mission.update_agent_status(r.name, r.status)
+
+        audit.record(
+            "orchestrator",
+            "error",
+            "mission_hard_timeout",
+            {
+                "elapsed_seconds": round(elapsed, 2),
+                "failure_class": "timeout_error",
+            },
+        )
+        return True
 
     try:
         with Live(console=console, refresh_per_second=config.tui_refresh_rate) as live:
             spinner_idx = 0
 
-            def update_ui():
+            messages_cache = {"ts": 0.0, "items": []}
+            log_tail_cache = {}
+            liveness_cache = {}
+            view_refresh_cache = {"messages": 0.0, "detail": 0.0}
+
+            def invalidate_messages_cache():
+                messages_cache["ts"] = 0.0
+
+            def get_cached_messages(force=False):
+                now = time.time()
+                ttl = 0.25 if current_view == ViewMode.MESSAGES else 0.5
+                if force or (now - messages_cache["ts"] >= ttl):
+                    messages_cache["items"] = get_all_messages()
+                    messages_cache["ts"] = now
+                return messages_cache["items"]
+
+            def get_cached_log_tail(runner):
+                now = time.time()
+                ttl = 0.25 if current_view == ViewMode.DETAIL else 0.5
+                entry = log_tail_cache.get(runner.name)
+                if not os.path.exists(runner.log_file):
+                    log_tail_cache[runner.name] = {
+                        "mtime": None, "size": 0, "ts": now, "tail": []
+                    }
+                    return []
+
+                try:
+                    st = os.stat(runner.log_file)
+                    mtime_ns = st.st_mtime_ns
+                    size = st.st_size
+                except OSError:
+                    return []
+
+                if (
+                    entry
+                    and entry["mtime"] == mtime_ns
+                    and entry["size"] == size
+                    and (now - entry["ts"]) < ttl
+                ):
+                    return entry["tail"]
+
+                tail = read_log_tail(runner.log_file, max_lines=20)
+                log_tail_cache[runner.name] = {
+                    "mtime": mtime_ns,
+                    "size": size,
+                    "ts": now,
+                    "tail": tail,
+                }
+                return tail
+
+            def update_ui(force_data_refresh=False):
                 nonlocal spinner_idx
                 if current_view == ViewMode.DASHBOARD:
                     content = render_dashboard(
                         runners, spinner_idx, selected_idx, backend, show_help
                     )
                 elif current_view == ViewMode.MESSAGES:
-                    content = render_messages_view()
+                    now = time.time()
+                    if force_data_refresh or (now - view_refresh_cache["messages"] >= 0.25):
+                        msg_items = get_cached_messages(force=force_data_refresh)
+                        content = render_messages_view(msg_items)
+                        view_refresh_cache["messages"] = now
+                        live.update(content)
+                    spinner_idx += 1
+                    return
                 elif current_view == ViewMode.DETAIL:
                     if 0 <= selected_idx < len(runners):
-                        content = render_detail_view(runners[selected_idx])
+                        now = time.time()
+                        if force_data_refresh or (now - view_refresh_cache["detail"] >= 0.25):
+                            selected_runner = runners[selected_idx]
+                            msg_items = get_cached_messages(force=force_data_refresh)
+                            log_tail = get_cached_log_tail(selected_runner)
+                            content = render_detail_view(selected_runner, msg_items, log_tail)
+                            view_refresh_cache["detail"] = now
+                            live.update(content)
+                        spinner_idx += 1
+                        return
                     else:
                         content = render_dashboard(
                             runners, spinner_idx, selected_idx, backend, show_help
@@ -761,9 +1110,9 @@ def main():
                 elif key == 'esc':
                     current_view = ViewMode.DASHBOARD
                     show_help = False
-                elif key == 'up':
+                elif key == 'up' or key == 'w':
                     selected_idx = max(0, selected_idx - 1)
-                elif key == 'down':
+                elif key == 'down' or key == 's' or key == 'j':
                     selected_idx = min(len(runners) - 1, selected_idx + 1)
                 elif key == 'enter':
                     current_view = ViewMode.DETAIL
@@ -774,20 +1123,26 @@ def main():
                         if r.is_running:
                             if not demo_mode:
                                 backend.kill(r.name)
-                            r.status = AgentStatus.FAILED.value
+                            r.status = AgentStatus.SHUTDOWN.value
                             r.is_running = False
                             r.end_time = time.time()
+                            r.stop_mode = "force_kill"
+                            r.failure_reason = "killed_by_user"
+                            r.retryable = False
                             audit.record(r.name, "shutdown", "Killed by user")
-                            mission.update_agent_status(r.name, AgentStatus.FAILED.value)
-                elif key == 's':
+                            mission.update_agent_status(r.name, AgentStatus.SHUTDOWN.value)
+                elif key == 'x':
                     # Send shutdown request
                     if 0 <= selected_idx < len(runners):
                         r = runners[selected_idx]
                         if r.is_running:
                             leader_mailbox.send(
-                                r.name, "shutdown_request",
+                                r.name, MessageType.SHUTDOWN_REQUEST,
                                 "Shutdown requested by orchestrator."
                             )
+                            r.stop_mode = "graceful_shutdown"
+                            r.stop_requested_at = time.time()
+                            r.retryable = False
                             audit.record(r.name, "shutdown", "Shutdown request sent")
                 elif key == '?':
                     show_help = not show_help
@@ -796,28 +1151,79 @@ def main():
 
             def poll_leader_inbox():
                 """Check leader mailbox for agent status updates."""
+                changed = False
                 for msg in leader_mailbox.poll():
+                    changed = True
                     for r in runners:
                         if r.name == msg.sender or r.name.lower() == msg.sender:
                             r.msg_count["recv"] += 1
+                            r.last_progress_at = time.time()
+                            if msg.msg_type == MessageType.STATUS_UPDATE.value:
+                                if msg.content:
+                                    r.last_log = msg.content[:120]
+                                if "__AGENT_COMPLETED__" in (msg.content or ""):
+                                    r.saw_completion_signal = True
+                            if msg.msg_type == MessageType.SHUTDOWN_RESPONSE.value:
+                                r.status = AgentStatus.SHUTDOWN.value
+                                r.is_running = False
+                                r.retryable = False
+                                r.end_time = time.time()
+                                mission.update_agent_status(r.name, r.status)
+                                audit.record(r.name, "status_change", r.status)
+                                continue
                             if msg.content:
                                 r.last_log = msg.content[:80]
+                if changed:
+                    invalidate_messages_cache()
 
-            def check_backend_alive(r):
-                """Check if a non-demo runner's backend process is still alive."""
-                if r.is_running and not demo_mode:
-                    if not backend.is_alive(r.name):
+            def check_backend_alive_many(active_runners):
+                if demo_mode:
+                    return
+
+                now = time.time()
+                interval = 0.5 if backend.get_type() == "tmux" else 0.2
+                to_probe = []
+
+                for r in active_runners:
+                    if not r.is_running:
+                        continue
+                    entry = liveness_cache.get(r.name)
+                    if not entry or (now - entry["ts"] >= interval):
+                        to_probe.append(r.name)
+
+                if to_probe:
+                    alive_map = backend.is_alive_many(to_probe)
+                    for name in to_probe:
+                        liveness_cache[name] = {
+                            "ts": now,
+                            "alive": bool(alive_map.get(name, False)),
+                        }
+
+                for r in active_runners:
+                    if not r.is_running:
+                        continue
+                    entry = liveness_cache.get(r.name)
+                    if entry and not entry["alive"]:
                         r.is_running = False
                         r.end_time = time.time()
-                        if hasattr(backend, 'get_return_code'):
-                            rc = backend.get_return_code(r.name)
-                            r.status = (
-                                AgentStatus.COMPLETED.value
-                                if rc == 0
-                                else AgentStatus.FAILED.value
-                            )
-                        else:
+                        rc = backend.get_return_code(r.name)
+                        if rc == 0:
                             r.status = AgentStatus.COMPLETED.value
+                            r.failure_reason = ""
+                            r.retryable = False
+                        elif rc is None:
+                            if r.saw_completion_signal:
+                                r.status = AgentStatus.COMPLETED.value
+                                r.failure_reason = ""
+                                r.retryable = False
+                            else:
+                                r.status = AgentStatus.FAILED.value
+                                r.failure_reason = "backend_dead_unknown_rc"
+                                r.retryable = r.stop_mode not in ("force_kill", "graceful_shutdown", "watchdog_soft_shutdown")
+                        else:
+                            r.status = AgentStatus.FAILED.value
+                            r.failure_reason = f"process_exit_{rc}"
+                            r.retryable = r.stop_mode not in ("force_kill", "graceful_shutdown", "watchdog_soft_shutdown")
                         audit.record(r.name, "status_change", r.status)
                         mission.update_agent_status(r.name, r.status)
 
@@ -826,25 +1232,10 @@ def main():
             # =============================================================
             demo_threads = []
             for r in parallel_runners:
+                handle = spawn_runner(r)
                 if demo_mode:
-                    t = threading.Thread(target=r.run, daemon=True)
-                    t.start()
+                    t = handle
                     demo_threads.append(t)
-                    r.backend_info = "demo"
-                else:
-                    cmd = r.build_command()
-                    handle = backend.spawn(r.name, cmd, r.color)
-                    r.backend_info = (
-                        f"{backend.get_type()} {handle}" if handle else backend.get_type()
-                    )
-                    r.is_running = True
-                    r.status = AgentStatus.RUNNING.value
-                    r.start_time = time.time()
-                    audit.record(
-                        r.name, "spawned",
-                        f"mode={r.mode}",
-                        {"backend": backend.get_type()},
-                    )
 
             while not quit_requested:
                 # Check if all parallel runners are done
@@ -853,17 +1244,23 @@ def main():
                         r.is_running for r in parallel_runners
                     )
                 else:
+                    check_backend_alive_many(parallel_runners)
                     for r in parallel_runners:
-                        check_backend_alive(r)
                         r._read_new_logs()
+                    apply_watchdog(parallel_runners)
+                    for r in parallel_runners:
+                        if not r.is_running:
+                            maybe_retry_runner(r)
                     all_done = not any(
                         r.is_running for r in parallel_runners
                     )
 
                 poll_leader_inbox()
+                if enforce_hard_timeout():
+                    break
                 if handle_keyboard():
                     break
-                update_ui()
+                update_ui(force_data_refresh=False)
 
                 if all_done:
                     break
@@ -880,38 +1277,29 @@ def main():
                     break
 
                 if demo_mode:
-                    t = threading.Thread(target=r.run, daemon=True)
-                    t.start()
-                    r.backend_info = "demo"
+                    spawn_runner(r)
                 else:
-                    cmd = r.build_command()
-                    handle = backend.spawn(r.name, cmd, r.color)
-                    r.backend_info = (
-                        f"{backend.get_type()} {handle}" if handle else backend.get_type()
-                    )
-                    r.is_running = True
-                    r.status = AgentStatus.RUNNING.value
-                    r.start_time = time.time()
-                    audit.record(
-                        r.name, "spawned",
-                        f"mode=serial",
-                        {"backend": backend.get_type()},
-                    )
+                    spawn_runner(r)
 
                 while not quit_requested:
                     if demo_mode:
                         if not r.is_running:
                             break
                     else:
-                        check_backend_alive(r)
+                        check_backend_alive_many([r])
                         r._read_new_logs()
+                        apply_watchdog([r])
+                        if not r.is_running and maybe_retry_runner(r):
+                            continue
                         if not r.is_running:
                             break
 
                     poll_leader_inbox()
+                    if enforce_hard_timeout():
+                        break
                     if handle_keyboard():
                         break
-                    update_ui()
+                    update_ui(force_data_refresh=False)
                     time.sleep(0.1)
 
             if quit_requested:
@@ -925,38 +1313,29 @@ def main():
                     break
 
                 if demo_mode:
-                    t = threading.Thread(target=r.run, daemon=True)
-                    t.start()
-                    r.backend_info = "demo"
+                    spawn_runner(r)
                 else:
-                    cmd = r.build_command()
-                    handle = backend.spawn(r.name, cmd, r.color)
-                    r.backend_info = (
-                        f"{backend.get_type()} {handle}" if handle else backend.get_type()
-                    )
-                    r.is_running = True
-                    r.status = AgentStatus.RUNNING.value
-                    r.start_time = time.time()
-                    audit.record(
-                        r.name, "spawned",
-                        f"mode=validator",
-                        {"backend": backend.get_type()},
-                    )
+                    spawn_runner(r)
 
                 while not quit_requested:
                     if demo_mode:
                         if not r.is_running:
                             break
                     else:
-                        check_backend_alive(r)
+                        check_backend_alive_many([r])
                         r._read_new_logs()
+                        apply_watchdog([r])
+                        if not r.is_running and maybe_retry_runner(r):
+                            continue
                         if not r.is_running:
                             break
 
                     poll_leader_inbox()
+                    if enforce_hard_timeout():
+                        break
                     if handle_keyboard():
                         break
-                    update_ui()
+                    update_ui(force_data_refresh=False)
                     time.sleep(0.1)
 
             if quit_requested:
@@ -971,7 +1350,27 @@ def main():
 
     finally:
         keyboard.stop()
+        for r in runners:
+            if r.is_running:
+                if r.stop_mode == "none":
+                    r.stop_mode = "graceful_shutdown"
+                    r.stop_requested_at = time.time()
+                try:
+                    leader_mailbox.send(
+                        r.name,
+                        MessageType.SHUTDOWN_REQUEST,
+                        "Shutdown requested by orchestrator cleanup.",
+                    )
+                except Exception:
+                    pass
+
         if not demo_mode:
+            for r in runners:
+                if r.is_running:
+                    try:
+                        backend.kill(r.name)
+                    except Exception:
+                        pass
             backend.cleanup()
 
         # Update mission state
@@ -979,6 +1378,9 @@ def main():
             r for r in runners if r.status != AgentStatus.COMPLETED.value
         ]
         mission.status = "completed" if not failed_runners else "failed"
+        mission.ended_at = time.time()
+        if failed_runners and not mission.failure_reason:
+            mission.failure_reason = "runtime_failed"
         mission.save()
 
         # Generate post-mission report

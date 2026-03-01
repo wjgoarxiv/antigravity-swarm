@@ -19,6 +19,12 @@ class SpawnBackend(ABC):
         """Check if an agent is still running."""
         ...
 
+    def is_alive_many(self, agent_names: List[str]) -> dict:
+        return {name: self.is_alive(name) for name in agent_names}
+
+    def get_return_code(self, agent_name: str) -> Optional[int]:
+        return None
+
     @abstractmethod
     def cleanup(self):
         """Cleanup all resources on shutdown."""

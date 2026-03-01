@@ -58,7 +58,7 @@ Final report format:
 > [!IMPORTANT] 
 > **Why do you need this?**
 >
-> As of {today-date}, **there is NO native method** to deploy sub-agents in Gemini CLI or the Antigravity IDE.
+> As of 2026-03-02, **there is NO native method** to deploy sub-agents in Gemini CLI or the Antigravity IDE.
 > This skill bridges that gap, unlocking true parallel agent orchestration for your environment.
 
 > [!NOTE] 

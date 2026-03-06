@@ -132,8 +132,9 @@ class KeyboardListener:
                             pass
                 else:
                     time.sleep(0.05)
-        except Exception:
-            pass
+        except Exception as e:
+            self._running = False
+            print(f"\n[KeyboardListener] Windows listener thread failed: {e}", file=sys.stderr)
 
     def _listen_unix(self):
         try:
@@ -164,8 +165,9 @@ class KeyboardListener:
                         self._queue.append('?')
                     else:
                         self._queue.append(ch)
-        except Exception:
-            pass
+        except Exception as e:
+            self._running = False
+            print(f"\n[KeyboardListener] Unix listener thread failed: {e}", file=sys.stderr)
         finally:
             if self._old_settings:
                 try:

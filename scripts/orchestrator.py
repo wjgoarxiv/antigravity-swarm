@@ -21,9 +21,14 @@ import time
 import os
 import json
 import random
-import select
-import termios
-import tty
+try:
+    import msvcrt
+    WINDOWS_MODE = True
+except ImportError:
+    WINDOWS_MODE = False
+    import select
+    import termios
+    import tty
 from rich.console import Console
 from rich.live import Live
 from rich.table import Table
@@ -76,7 +81,7 @@ class ViewMode:
 # ---------------------------------------------------------------------------
 
 class KeyboardListener:
-    """Non-blocking keyboard listener (daemon thread + termios raw mode)."""
+    """Non-blocking keyboard listener (daemon thread + raw mode)."""
 
     def __init__(self):
         self._queue = []
@@ -88,11 +93,50 @@ class KeyboardListener:
         if not sys.stdin.isatty():
             return
         self._running = True
-        self._old_settings = termios.tcgetattr(sys.stdin)
+        if not WINDOWS_MODE:
+            self._old_settings = termios.tcgetattr(sys.stdin.fileno())
         self._thread = threading.Thread(target=self._listen, daemon=True)
         self._thread.start()
 
     def _listen(self):
+        if WINDOWS_MODE:
+            self._listen_windows()
+        else:
+            self._listen_unix()
+
+    def _listen_windows(self):
+        try:
+            while self._running:
+                if msvcrt.kbhit():
+                    ch = msvcrt.getch()
+                    if ch in (b'\x00', b'\xe0'):
+                        ch2 = msvcrt.getch()
+                        if ch2 == b'H':
+                            self._queue.append('up')
+                        elif ch2 == b'P':
+                            self._queue.append('down')
+                    elif ch == b'\x1b':
+                        self._queue.append('esc')
+                    elif ch == b'\t':
+                        self._queue.append('tab')
+                    elif ch in (b'\r', b'\n'):
+                        self._queue.append('enter')
+                    elif ch == b'?':
+                        self._queue.append('?')
+                    elif ch == b'\x03':  # Ctrl+C
+                        self._queue.append('q')
+                    else:
+                        try:
+                            self._queue.append(ch.decode('utf-8'))
+                        except UnicodeDecodeError:
+                            pass
+                else:
+                    time.sleep(0.05)
+        except Exception as e:
+            self._running = False
+            print(f"\n[KeyboardListener] Windows listener thread failed: {e}", file=sys.stderr)
+
+    def _listen_unix(self):
         try:
             tty.setcbreak(sys.stdin.fileno())
             while self._running:
@@ -121,12 +165,13 @@ class KeyboardListener:
                         self._queue.append('?')
                     else:
                         self._queue.append(ch)
-        except Exception:
-            pass
+        except Exception as e:
+            self._running = False
+            print(f"\n[KeyboardListener] Unix listener thread failed: {e}", file=sys.stderr)
         finally:
             if self._old_settings:
                 try:
-                    termios.tcsetattr(sys.stdin, termios.TCSADRAIN, self._old_settings)
+                    termios.tcsetattr(sys.stdin.fileno(), termios.TCSADRAIN, self._old_settings)
                 except Exception:
                     pass
 
@@ -137,9 +182,9 @@ class KeyboardListener:
 
     def stop(self):
         self._running = False
-        if self._old_settings:
+        if not WINDOWS_MODE and self._old_settings:
             try:
-                termios.tcsetattr(sys.stdin, termios.TCSADRAIN, self._old_settings)
+                termios.tcsetattr(sys.stdin.fileno(), termios.TCSADRAIN, self._old_settings)
             except Exception:
                 pass
 

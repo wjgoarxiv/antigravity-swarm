@@ -38,6 +38,7 @@ This skill allows you to spawn multiple specialized AI agents (Sub-Agents) to wo
 > This skill includes native support for Windows environments:
 > - **UTF-8 I/O**: PowerShell environments (CP949/Korean locale) enforce UTF-8 encoding for all I/O operations.
 > - **TUI Keyboard Input**: The orchestrator dashboard uses `msvcrt` for native Windows keyboard handling (arrow keys, Tab, Enter, ESC, q). Falls back to `termios`/`tty` on macOS/Linux automatically.
+>   *(Added in [PR #2](https://github.com/wjgoarxiv/antigravity-swarm/pull/2) by [@olveirap](https://github.com/olveirap))*
 
 > [!WARNING]
 > **Do NOT modify files in this directory while the Orchestrator is running.**

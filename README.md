@@ -2,103 +2,132 @@
   <img src="./cover.png" alt="antigravity-swarm cover" width="100%" />
 </p>
 
-# Antigravity Sub-Agents Skill 🚀
+<h1 align="center">Antigravity Swarm</h1>
+<p align="center">
+  <em>Run a coordinated team of AI coding agents from Gemini CLI and Antigravity IDE.</em>
+</p>
+<p align="center">
+  <a href="#quick-start">Quick Start</a> ·
+  <a href="#why-antigravity-swarm">Why Antigravity Swarm</a> ·
+  <a href="#usage">Usage</a> ·
+  <a href="#protocol--architecture">Architecture</a> ·
+  <a href="./README_KO.md">한국어</a>
+</p>
+<p align="center">
+  <img src="https://img.shields.io/github/stars/wjgoarxiv/antigravity-swarm?style=social" alt="GitHub stars" />
+  <img src="https://img.shields.io/badge/license-MIT-blue" alt="MIT license" />
+  <img src="https://img.shields.io/badge/python-3.8%2B-green" alt="Python 3.8+" />
+  <img src="https://img.shields.io/badge/runtime-Gemini%20CLI-4285F4" alt="Gemini CLI runtime" />
+</p>
 
-**Hire a team of AI agents to code for you.**
+Antigravity Swarm turns a single-agent workflow into a coordinated coding team. Use the planner to design a roster, the orchestrator to run it live, and the validator to close the mission with verification.
 
-This skill allows you to spawn multiple specialized AI agents (Sub-Agents) to work on complex tasks in parallel. Whether you are using the terminal or the Antigravity IDE, this tool orchestrates a team of experts—Architects, Engineers, and Validators—to solve your problems efficiently.
+## Antigravity Swarm in Action
 
 ```text
 ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
-┃                   ✨ Antigravity Swarm Mission Control ✨                      ┃
+┃                   Antigravity Swarm Mission Control                        ┃
 ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 ┌──────────────┬──────────┬──────────────┬───────┬─────────┬─────────────────────┐
 │ Agent        │ Role     │ Status       │ Time  │ Msgs    │ Backend             │
 ├──────────────┼──────────┼──────────────┼───────┼─────────┼─────────────────────┤
-│ ● Oracle     │ parallel │ ⠋ Running    │ 12.3s │ ↑2 ↓1   │ tmux %3             │
-│ ● Junior     │ parallel │ ⠋ Running    │ 10.1s │ ↑0 ↓1   │ tmux %4             │
-│ ● Librarian  │ serial   │ • Pending    │ -     │ -       │ -                   │
-│ ● Validator  │ validator│ • Pending    │ -     │ -       │ -                   │
+│ ● Oracle     │ parallel │ Running      │ 12.3s │ ↑2 ↓1   │ tmux %3             │
+│ ● Junior     │ parallel │ Running      │ 10.1s │ ↑0 ↓1   │ tmux %4             │
+│ ● Librarian  │ serial   │ Pending      │ -     │ -       │ -                   │
+│ ● Validator  │ validator│ Pending      │ -     │ -       │ -                   │
 └──────────────┴──────────┴──────────────┴───────┴─────────┴─────────────────────┘
 ┌─── Live Activity ──────────────────────────────────────────────────────────────┐
 │ Oracle: Analyzing auth.py module structure...                                  │
 └────────────────────────────────────────────────────────────────────────────────┘
-[Tab] View  [w,s] Select  [k] Kill  [s] Shutdown  [q] Quit
+[Tab] View  [w,s] Select  [k] Kill  [x] Shutdown  [q] Quit
 ```
 
-> [!IMPORTANT] 
-> **Why do you need this?**
->
-> As of 2026-03-02, **there is NO native method** to deploy sub-agents in Gemini CLI or the Antigravity IDE.
-> This skill bridges that gap, unlocking true parallel agent orchestration for your environment.
+> [!IMPORTANT]
+> If your Gemini-based workflow stops at a single agent, Antigravity Swarm adds the missing coordination layer: team planning, live orchestration, mailbox-based collaboration, resumable missions, and a mandatory final validator.
 
-> [!NOTE]
-> **Windows Compatibility**
->
-> This skill includes native support for Windows environments:
-> - **UTF-8 I/O**: PowerShell environments (CP949/Korean locale) enforce UTF-8 encoding for all I/O operations.
-> - **TUI Keyboard Input**: The orchestrator dashboard uses `msvcrt` for native Windows keyboard handling (arrow keys, Tab, Enter, ESC, q). Falls back to `termios`/`tty` on macOS/Linux automatically.
->   *(Added in [PR #2](https://github.com/wjgoarxiv/antigravity-swarm/pull/2) by [@olveirap](https://github.com/olveirap))*
+<a id="quick-start"></a>
+## Quick Start
 
-> [!WARNING]
-> **Do NOT modify files in this directory while the Orchestrator is running.**
-> The system actively reads and writes to `task_plan.md`, `findings.md`, and files in the `.swarm/` directory.
-> Manual edits during execution may cause race conditions or inconsistent agent behavior.
+Fastest path to a first mission:
 
-> [!NOTE]
-> **State Files Management**
-> When you initiate a major mission, the system will automatically generate `task_plan.md`, `findings.md`, and `progress.md` in your project root, plus a `.swarm/` directory for runtime state.
-> These files serve as the "shared memory" for the agent swarm. Do not delete them while a mission is active.
+1. Install Python dependencies and confirm Gemini CLI is available.
 
----
+   ```bash
+   pip install -r requirements.txt
+   gemini --version
+   ```
+
+2. Generate a starter team and mission files.
+
+   ```bash
+   python3 scripts/planner.py --preset quick "Write unit tests for all Python modules"
+   ```
+
+3. Launch the orchestrator.
+
+   ```bash
+   python3 scripts/orchestrator.py --yes
+   ```
+
+Resume the latest mission:
+
+```bash
+python3 scripts/orchestrator.py --resume
+```
+
+Try the TUI without Gemini CLI:
+
+```bash
+python3 scripts/orchestrator.py --demo
+```
+
+> [!TIP]
+> The planner generates `subagents.yaml`, `task_plan.md`, `findings.md`, `progress.md`, and the `.swarm/` runtime state in the mission workspace.
+
+<a id="why-antigravity-swarm"></a>
+## Why Antigravity Swarm
+
+- **Parallel execution**: Run multiple agents at once instead of waiting on a single long loop.
+- **Specialized roles**: Split architecture, search, implementation, critique, and documentation across distinct agents.
+- **Built-in verification**: Every generated team ends with `Quality_Validator`, the final gate before mission completion.
+- **Live coordination**: Agents can message each other through file-backed mailboxes while the orchestrator keeps the state visible.
+- **Mission durability**: Resume interrupted runs, keep an audit trail, and inspect progress after the fact.
+
+The value is not just "more agents." It is explicit coordination: planning, execution, communication, and validation are separated into visible steps you can inspect and control.
 
 ## What's New in v2
 
-Antigravity Swarm has evolved from a batch orchestrator to a **live agent team platform**:
+Antigravity Swarm evolved from a batch dispatcher into a live agent team platform:
 
-- **Inter-Agent Messaging**: Agents can communicate via a file-based JSON mailbox system with `<<SEND_MESSAGE>>` and `<<BROADCAST>>` tags
-- **Agent Lifecycle Management**: PENDING → RUNNING → IDLE → poll → RUNNING → COMPLETED/FAILED/SHUTDOWN
-- **Interactive TUI v2**: Three views (Dashboard with 6 columns, Messages timeline, Agent Detail) with full keyboard navigation
-- **Backend Abstraction**: Thread backend (default) + tmux split-pane backend (auto-selected if tmux available)
-- **Audit Trail**: Append-only JSONL per mission in `.swarm/audit/`
-- **Mission Persistence**: Resume interrupted missions with `--resume`
-- **Team Presets**: `swarm-config.yaml` with reusable team configurations via `--preset` flag
-- **Post-Mission Reporting**: Auto-generated summary with per-agent statistics
-- **Streaming Side-Effect Parsing**: Tags executed as they appear (not after completion)
-- **Heartbeat Monitoring**: Automatic dead agent detection
-
----
-
-## Why use this?
-
-- **Parallel Execution**: Why wait for one agent to finish? Run 3 agents at once (e.g., one writes docs, one writes tests, one writes code).
-- **Specialization**: Assign different "Personas" (Prompts) to each agent.
-- **Inter-Agent Communication**: Agents can message each other to coordinate, share findings, or request help.
-- **Quality Assurance**: Every team includes a mandatory **Validator Agent** who reviews the work before completion, ensuring high quality.
-- **Resume Support**: Interrupted missions can be resumed from the last checkpoint.
-
----
+- **Inter-agent messaging**: Agents communicate through a file-based JSON mailbox system with `<<SEND_MESSAGE ...>>` and `<<BROADCAST>>` tags.
+- **Agent lifecycle management**: `PENDING -> RUNNING -> IDLE -> RUNNING -> COMPLETED/FAILED/SHUTDOWN`
+- **Interactive TUI v2**: Dashboard, Messages, and Agent Detail views with keyboard navigation.
+- **Backend abstraction**: Thread backend by default, tmux panes when tmux is available.
+- **Audit trail**: Append-only JSONL mission logs in `.swarm/audit/`.
+- **Mission persistence**: Resume interrupted missions with `--resume`.
+- **Team presets**: Reusable configurations through `swarm-config.yaml`.
+- **Post-mission reporting**: A summary report with per-agent statistics and recent timeline entries.
+- **Streaming side-effect parsing**: Tags execute as they appear in agent output.
+- **Heartbeat monitoring**: Dead or stalled agents are detected automatically.
 
 ## Prerequisites
 
-Before installing, ensure you have the following:
+Before installing, make sure you have:
 
 | Requirement | Install Command | Notes |
 |------------|----------------|-------|
-| **Node.js** (v18+) | [nodejs.org](https://nodejs.org) | Required for Gemini CLI |
-| **Gemini CLI** | `npm install -g @google/gemini-cli` | Core dependency — agents run on Gemini |
-| **Python 3.8+** | [python.org](https://python.org) | Runtime for orchestrator scripts |
-| **pip packages** | `pip install -r requirements.txt` | `rich`, `pyyaml` |
+| **Node.js** (v18+) | [nodejs.org](https://nodejs.org) | Needed for Gemini CLI |
+| **Gemini CLI** | `npm install -g @google/gemini-cli` | Core runtime used by the agents |
+| **Python 3.8+** | [python.org](https://python.org) | Runtime for planner/orchestrator scripts |
+| **pip packages** | `pip install -r requirements.txt` | Installs `rich`, `pyyaml` |
 
 > [!TIP]
-> If Gemini CLI is not installed, the planner will offer to install it automatically when you first run a mission.
-
----
+> If Gemini CLI is not installed, the planner can offer an install flow the first time you run a mission.
 
 ## Installation
 
 > [!TIP]
-> You can paste the following block directly to an LLM agent and let it perform installation end-to-end.
+> You can paste the following block directly into an LLM agent and let it perform installation end-to-end.
 
 ```text
 Install this repository end-to-end with verification.
@@ -107,16 +136,16 @@ Repository: https://github.com/wjgoarxiv/antigravity-swarm
 Target directory: <your-install-path>/antigravity-swarm
 
 Do this exactly:
-1) Clone the repo into the target directory (if already exists, do not reset/delete; report current state).
+1) Clone the repo into the target directory (if it already exists, do not reset/delete; report current state).
 2) Install dependencies from requirements.txt.
-3) Verify runtime prerequisites and build health:
+3) Verify runtime prerequisites and script health:
    - gemini --version
    - python3 -m py_compile scripts/*.py scripts/core/*.py scripts/core/backends/*.py
    - python3 scripts/orchestrator.py --demo
 4) If this repository contains nvim/neovim setup files, apply those settings too; if not, report "no nvim config found" and continue.
 
 Safety rules:
-- Stop immediately on first failure and report exact failed command + reason.
+- Stop immediately on the first failure and report the exact failed command plus reason.
 - Never run destructive git commands (reset --hard, force push, checkout --, delete existing dirs).
 
 Final report format:
@@ -127,21 +156,29 @@ Final report format:
 - Next action: one line
 ```
 
-1.  **Locate the Skill**: Ensure this repository is in your skills folder:
-    ```bash
-    ~/.gemini/skills/antigravity-swarm/
-    ```
-2.  **Install Dependencies**:
+### Manual Install
 
-    ```bash
-    pip install -r requirements.txt
-    ```
+1. Clone the repository and enter it.
 
-    _(Requires `rich`, `pyyaml`, etc.)_
+   ```bash
+   git clone https://github.com/wjgoarxiv/antigravity-swarm.git
+   cd antigravity-swarm
+   ```
 
-3.  **Gemini CLI**: Ensure the `gemini` command is installed and in your PATH.
+2. Link or copy it into your Gemini skills directory.
 
-4.  **Configuration (Optional)**: Create `swarm-config.yaml` in the project root to define team presets and customize behavior.
+   ```bash
+   mkdir -p ~/.gemini/skills
+   ln -s "$(pwd)" ~/.gemini/skills/antigravity-swarm
+   ```
+
+3. Install Python dependencies.
+
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+4. Ensure the `gemini` command is available in `PATH`, then adjust `swarm-config.yaml` if you want custom presets or backend settings.
 
 ### Agent One-Shot Prompt (Update/Upgrade)
 
@@ -152,7 +189,7 @@ Repository path: <your-install-path>/antigravity-swarm
 
 Do this exactly:
 1) Check current git status and branch.
-2) Pull latest changes safely (no destructive operations).
+2) Pull the latest changes safely (no destructive operations).
 3) Reinstall/refresh Python dependencies only if requirements.txt changed.
 4) Run validation:
    - gemini --version
@@ -172,13 +209,38 @@ Final report format:
 - Next action: one line
 ```
 
----
+## Operational Notes
 
-## User Manual
+> [!NOTE]
+> **Windows compatibility**
+>
+> Antigravity Swarm includes Windows-aware handling for PowerShell and Korean locale environments. UTF-8 output is enforced where possible, and the TUI switches to native `msvcrt` keyboard input on Windows while using `termios`/`tty` on macOS and Linux.
 
-Use one of these minimal paths.
+> [!WARNING]
+> **Do not modify runtime state while the orchestrator is running.**
+>
+> The system actively reads and writes `task_plan.md`, `findings.md`, `progress.md`, `subagents.yaml`, and the `.swarm/` directory. Manual edits during execution can introduce race conditions or inconsistent agent behavior.
 
-### Path A: Gemini CLI (Recommended)
+> [!NOTE]
+> **State files are part of the workflow**
+>
+> A mission creates shared working memory files plus `.swarm/` runtime state. Treat them as coordination artifacts, not disposable scratch files, until the run is complete.
+
+<a id="usage"></a>
+## Usage
+
+Pick the path that matches how you want to work.
+
+### Path A: Gemini CLI
+
+Custom team planning:
+
+```bash
+python3 scripts/planner.py "Your mission"
+python3 scripts/orchestrator.py --yes
+```
+
+Preset-driven planning:
 
 ```bash
 python3 scripts/planner.py --preset quick "Your mission"
@@ -191,7 +253,7 @@ Resume:
 python3 scripts/orchestrator.py --resume
 ```
 
-Demo (no Gemini required):
+Demo:
 
 ```bash
 python3 scripts/orchestrator.py --demo
@@ -209,20 +271,20 @@ Resume:
 python3 scripts/ultrawork_loop.py --resume
 ```
 
+`ultrawork_loop.py` re-plans and re-runs the mission for up to five attempts if a run fails.
+
 ### Path C: Antigravity IDE
 
-Add this skill to `~/.gemini/GEMINI.md` and the main agent can trigger it automatically for complex tasks.
-
----
+Add this skill to `~/.gemini/GEMINI.md` so the main agent can trigger it automatically for larger tasks.
 
 ## Example Prompts
 
-Not sure how to start? Copy-paste one of these prompts to your LLM agent:
+Not sure how to phrase a mission? Copy-paste one of these prompts into your LLM agent.
 
 ### Basic Usage
 
 ```text
-antigravity-swarm 스킬을 이용해서 이 프로젝트에 대한 단위 테스트를 작성해줘.
+Use the antigravity-swarm skill to write unit tests for this project.
 ```
 
 ```text
@@ -232,266 +294,297 @@ Use the antigravity-swarm skill to refactor the authentication module in this pr
 ### Advanced Usage
 
 ```text
-antigravity-swarm 스킬의 fullstack 프리셋을 이용해서 React 기반의 Todo 앱을 만들어줘.
+Use the antigravity-swarm skill with the fullstack preset to build a React Todo app.
 ```
 
 ```text
-Use the antigravity-swarm skill with the research preset to analyze the codebase architecture and generate documentation.
+Use the antigravity-swarm skill with the analysis preset to inspect the codebase architecture and generate documentation.
 ```
 
 ### Direct CLI Usage
 
 ```bash
-# Quick mission with preset
+# Quick mission with a compact roster
 python3 scripts/planner.py --preset quick "Write unit tests for all Python modules"
 python3 scripts/orchestrator.py --yes
 
-# Full-stack team for a complex task
+# Full-stack team for a broader build
 python3 scripts/planner.py --preset fullstack "Build a REST API with authentication"
+python3 scripts/orchestrator.py --yes
+
+# Analysis-heavy team for planning and critique
+python3 scripts/planner.py --preset analysis "Review the architecture and identify risks"
 python3 scripts/orchestrator.py --yes
 ```
 
 > [!TIP]
-> When using from an IDE agent, simply describe your task in natural language with "antigravity-swarm 스킬을 이용해서" (Korean) or "Use the antigravity-swarm skill to" (English) as a prefix.
+> In an IDE agent, plain-language requests like `Use the antigravity-swarm skill to ...` are usually enough to trigger the workflow.
 
----
+## Available Agent Roles
 
-## Available Agent Roles (Oh-My-Opencode Standard)
+The planner selects 2-5 specialists from this pool and always places `Quality_Validator` last.
 
-The Planner automatically selects the best experts for your mission from this pool:
-
-| Role | Expertise | Model |
-|------|-----------|-------|
-| **Oracle** | Architecture, Deep Debugging, Root Cause Analysis | gemini-3-pro |
-| **Librarian** | Documentation, Code Structure, Research | gemini-3-flash |
-| **Explore** | Fast Search, Pattern Matching, Reconnaissance | gemini-3-flash |
-| **Frontend** | UI/UX, Styling, Accessibility | gemini-3-flash |
-| **Multimodal** | Vision Analysis, Mockups | gemini-3-pro |
-| **Doc_Writer** | READMEs, API Docs, Comments | gemini-3-flash |
-| **Prometheus** | Strategic Planning, Requirements Gathering | gemini-3-pro |
-| **Momus** | Critical Review, Risk Identification | gemini-3-pro |
-| **Sisyphus** | Task Coordination, Delegation (PM) | gemini-3-flash |
-| **Junior** | Implementation, Coding, Bug Fixing | gemini-3-flash |
-| **Quality_Validator** | Final Verification & Testing (Mandatory) | gemini-3-flash |
-
----
+| Role | Expertise | Default Model |
+|------|-----------|---------------|
+| **Oracle** | Architecture, deep debugging, root cause analysis | `auto-gemini-3` |
+| **Librarian** | Documentation search, code structure analysis, research | `auto-gemini-3` |
+| **Explore** | Fast file search, pattern matching, reconnaissance | `auto-gemini-3` |
+| **Frontend** | UI components, styling, accessibility, frontend logic | `auto-gemini-3` |
+| **Doc_Writer** | READMEs, API docs, comments | `auto-gemini-3` |
+| **Prometheus** | Strategic planning, requirements gathering | `auto-gemini-3` |
+| **Momus** | Critical review, feasibility checks, risk identification | `auto-gemini-3` |
+| **Sisyphus** | Task coordination, delegation, progress tracking | `auto-gemini-3` |
+| **Junior** | Concrete implementation, direct execution | `auto-gemini-3` |
+| **Quality_Validator** | Final QA, verification, testing | `auto-gemini-3` |
 
 ## Configuration
 
-Create `swarm-config.yaml` in your project root to customize behavior and define team presets:
+Edit `swarm-config.yaml` to customize runtime behavior and team presets:
 
 ```yaml
-# Team presets (reusable configurations)
+# Antigravity Swarm Configuration
+version: 1
+
+# Spawn backend: auto | tmux | thread
+backend: auto
+
+# Default model for agents
+default_model: auto-gemini-3
+
+# Maximum parallel agents
+max_parallel: 5
+
+# Mailbox polling interval (milliseconds)
+poll_interval_ms: 1000
+
+# Permission mode: auto | ask | deny
+permission_mode: auto
+
+# Audit trail
+audit_enabled: true
+
+# TUI refresh rate (frames per second)
+tui_refresh_rate: 10
+
+# Context compaction threshold (lines before compacting)
+compaction_threshold: 50
+
+# Team presets
 presets:
   fullstack:
+    description: "Full-stack development team"
     agents:
-      - name: Frontend
-        role: parallel
-      - name: Junior
-        role: parallel
-      - name: Quality_Validator
-        role: validator
-
-  research:
+      - {name: Oracle, mode: parallel}
+      - {name: Frontend, mode: parallel}
+      - {name: Junior, mode: parallel}
+      - {name: Quality_Validator, mode: validator}
+  analysis:
+    description: "Deep analysis and planning team"
     agents:
-      - name: Librarian
-        role: serial
-      - name: Explore
-        role: parallel
-      - name: Quality_Validator
-        role: validator
-
-# Global settings
-orchestrator:
-  max_parallel: 3
-  heartbeat_interval: 30
-  backend: auto  # 'thread', 'tmux', or 'auto'
+      - {name: Prometheus, mode: serial}
+      - {name: Momus, mode: serial}
+      - {name: Librarian, mode: parallel}
+      - {name: Quality_Validator, mode: validator}
+  quick:
+    description: "Fast single-agent execution"
+    agents:
+      - {name: Junior, mode: serial}
+      - {name: Quality_Validator, mode: validator}
 ```
 
 Use a preset:
 
 ```bash
-python3 scripts/planner.py --preset fullstack "Your mission description"
+python3 scripts/planner.py --preset fullstack "Build a Todo app"
+python3 scripts/planner.py --preset analysis "Review architecture risks"
+python3 scripts/planner.py --preset quick "Fix a small bug safely"
 ```
-
----
 
 ## Agent Communication
 
-Agents can communicate with each other using two special tags:
+Agents communicate with two message tags that are parsed from streamed output.
 
-### Send Direct Message
+### Send a Direct Message
 
 ```markdown
-<<SEND_MESSAGE>>
-to: Junior
-subject: Authentication module structure
----
-I've analyzed the codebase. The auth module is in `src/auth/`.
-Please implement OAuth2 flows in `src/auth/oauth.py`.
-<<END_SEND_MESSAGE>>
+<<SEND_MESSAGE to="Junior">>
+I mapped the auth module. Please implement the OAuth2 flow in `src/auth/oauth.py`.
+<<END_MESSAGE>>
 ```
 
-### Broadcast to All Agents
+### Broadcast to the Whole Team
 
 ```markdown
 <<BROADCAST>>
-subject: API contract finalized
----
-The REST API spec is now frozen. See `docs/api.yml` for details.
-All agents should follow this contract.
+The API contract is frozen. Everyone should follow `docs/api.yml`.
 <<END_BROADCAST>>
 ```
 
-Messages are delivered via a file-based JSON mailbox system in `.swarm/mailboxes/`. The orchestrator displays message activity in real-time.
-
----
+Messages are stored in `.swarm/mailboxes/` and surfaced in the orchestrator's message timeline.
 
 ## TUI Controls
 
-The Interactive TUI v2 supports three views with keyboard navigation:
+The interactive TUI has three views with keyboard navigation.
 
 | Key | Action |
 |-----|--------|
 | **Tab** | Cycle between Dashboard, Messages, and Agent Detail views |
-| **w / s** | Navigate agent list or messages |
-| **Enter** | View detailed information for selected agent/message |
-| **k** | Kill selected agent (SIGTERM) |
-| **s** | Send shutdown request to selected agent |
-| **q** | Quit orchestrator |
+| **w / s** | Move selection |
+| **Enter** | Open the selected agent or message |
+| **k** | Kill the selected agent |
+| **x** | Send a shutdown request to the selected agent |
+| **q** | Quit the orchestrator |
 | **Esc** | Return to Dashboard view |
-| **?** | Show help overlay |
+| **?** | Show help |
 
-### Dashboard View (6 Columns)
+### Dashboard View
 
-- **Agent**: Agent name with status indicator
-- **Role**: parallel / serial / validator
-- **Status**: Pending / Running / Idle / Completed / Failed / Shutdown
+- **Agent**: Agent name and state indicator
+- **Role**: `parallel`, `serial`, or `validator`
+- **Status**: `Pending`, `Running`, `Idle`, `Completed`, `Failed`, or `Shutdown`
 - **Time**: Runtime duration
-- **Msgs**: Message counts (↑ sent, ↓ received)
-- **Backend**: Execution backend (thread ID or tmux pane)
+- **Msgs**: Sent and received message counts
+- **Backend**: `thread` process info or a tmux pane id
 
 ### Messages View
 
-Real-time message timeline showing all inter-agent communication with timestamps and subjects.
+Shows inter-agent messages in chronological order, including sender, receiver, and a short preview.
 
 ### Agent Detail View
 
-Detailed status for a single agent including full conversation history, message inbox, and resource usage.
+Shows one agent's full output, status history, and recent context at a glance.
 
----
-
+<a id="protocol--architecture"></a>
 ## Protocol & Architecture
 
-### The "Manus Protocol"
+### The Manus Protocol
 
-This skill enforces a rigorous state management protocol:
+Antigravity Swarm follows a persistent state-management pattern:
 
-- **`task_plan.md`**: The master checklist.
-- **`findings.md`**: Shared scratchpad for agents to exchange knowledge.
-- **`progress.md`**: Immutable log of what has been done.
+- **`task_plan.md`**: The master checklist for the mission
+- **`findings.md`**: Shared scratchpad for research and discoveries
+- **`progress.md`**: Running log of completed work and current status
 
 ### Inter-Agent Mailbox System
 
-In addition to the Manus Protocol files, v2 introduces a file-based JSON mailbox system:
+In addition to the Manus files, v2 introduces a file-based JSON mailbox layer:
 
 - **`.swarm/mailboxes/{agent}/inbox/`**: Unread messages for each agent
-- **`.swarm/mailboxes/{agent}/processed/`**: Archive of read messages
-- **Message Format**: JSON files with `from`, `to`, `subject`, `body`, `timestamp` fields
-- **Delivery**: Orchestrator polls mailboxes and injects messages into agent prompts
+- **`.swarm/mailboxes/{agent}/processed/`**: Archive of consumed messages
+- **Message shape**: JSON records with sender, receiver, type, body, and timestamps
+- **Delivery model**: The orchestrator polls mailboxes and injects new messages into agent prompts
 
-This allows agents to collaborate dynamically without modifying shared markdown files.
+This lets agents collaborate dynamically without competing to edit the same markdown files.
 
-### The "Validator" Rule
+### The Validator Rule
 
-By design, the **final agent** in any generated team is strictly enforced to be a **Quality Validator**.
+The last agent in any team must be `Quality_Validator`.
 
-- **Role**: Reviewer / QA.
-- **Task**: Check if `task_plan.md` is complete, run tests, and ensure the user's requirements are met.
-- **Benefit**: Redundant self-correction loop.
+- **Role**: Reviewer and QA gatekeeper
+- **Task**: Check `task_plan.md`, inspect artifacts, run verification, and confirm the mission is actually complete
+- **Benefit**: A final feedback loop before completion claims
 
 ### Agent Lifecycle
 
-Agents transition through these states:
+Agents move through these states:
 
-1. **PENDING**: Agent hired but not yet started
-2. **RUNNING**: Agent actively processing a task
-3. **IDLE**: Agent waiting for more work (can receive messages)
-4. **COMPLETED**: Agent finished successfully
-5. **FAILED**: Agent encountered a fatal error
-6. **SHUTDOWN**: Agent received shutdown request and exited gracefully
+1. **PENDING**: Hired but not started
+2. **RUNNING**: Actively processing work
+3. **IDLE**: Waiting for more work and able to receive messages
+4. **COMPLETED**: Finished successfully
+5. **FAILED**: Stopped because of an unrecoverable error
+6. **SHUTDOWN**: Exited after a shutdown request
 
-The orchestrator monitors heartbeats and automatically detects dead agents.
+The orchestrator also tracks heartbeats so dead or stalled agents can be detected automatically.
 
 ### Backend Abstraction
 
 Two execution backends are supported:
 
-- **Thread Backend**: Default. Each agent runs in a Python thread. Portable but no visual separation.
-- **Tmux Backend**: Auto-selected if tmux is available. Each agent runs in a tmux split-pane for live monitoring.
+- **Thread backend**: Default and portable. Each agent runs as a subprocess tracked by a Python thread.
+- **Tmux backend**: Auto-selected when tmux is available and you are not already inside a tmux session. Each agent runs in its own pane for live monitoring.
 
-Backend selection is automatic (`auto` mode) or can be forced via `swarm-config.yaml`.
-
----
+You can keep backend selection on `auto` or force `thread` / `tmux` in `swarm-config.yaml`.
 
 ## Directory Structure
+
+### Repository Layout
 
 ```text
 antigravity-swarm/
 ├── scripts/
-│   ├── core/                    # Shared core package
+│   ├── core/
 │   │   ├── __init__.py
-│   │   ├── config.py            # Centralized config + get_gemini_path()
-│   │   ├── types.py             # AgentStatus, MessageType, AgentIdentity
-│   │   ├── mailbox.py           # File-based JSON mailbox system
-│   │   ├── audit.py             # Append-only JSONL audit trail
-│   │   ├── mission.py           # Mission state persistence
+│   │   ├── config.py
+│   │   ├── types.py
+│   │   ├── mailbox.py
+│   │   ├── audit.py
+│   │   ├── mission.py
 │   │   └── backends/
-│   │       ├── __init__.py      # get_backend() factory
-│   │       ├── base.py          # SpawnBackend ABC
+│   │       ├── __init__.py
+│   │       ├── base.py
 │   │       ├── thread_backend.py
 │   │       └── tmux_backend.py
-│   ├── planner.py               # Team hiring + presets + team config
-│   ├── orchestrator.py          # Interactive TUI v2 + backends + mailbox
-│   ├── dispatch_agent.py        # Agent lifecycle + streaming parse + messaging
-│   ├── ultrawork_loop.py        # Autonomous loop + resume support
-│   ├── compactor.py             # Context compaction
-│   └── reporter.py              # Post-mission summary report
-├── swarm-config.yaml            # User configuration + presets
-├── subagents.yaml               # Current team roster (auto-generated)
-├── task_plan.md                 # Current mission status
-├── SKILL.md                     # Skill metadata
-├── README.md                    # This file
-└── README_KO.md                 # Korean documentation
+│   ├── planner.py
+│   ├── orchestrator.py
+│   ├── dispatch_agent.py
+│   ├── ultrawork_loop.py
+│   ├── compactor.py
+│   ├── reporter.py
+│   └── mock_gemini_timeout.sh
+├── cover.png
+├── GEMINI_example.md
+├── gemini-extension.json
+├── requirements.txt
+├── swarm-config.yaml
+├── SKILL.md
+├── README.md
+└── README_KO.md
 ```
 
-### Runtime Directory (.swarm/)
+### Generated in the Mission Workspace
+
+When you run a mission, Antigravity Swarm creates coordination files in the working directory:
+
+```text
+your-project/
+├── subagents.yaml
+├── task_plan.md
+├── findings.md
+├── progress.md
+└── .swarm/
+    ├── config.json
+    ├── mailboxes/
+    ├── audit/
+    └── missions/
+```
+
+### Runtime State (`.swarm/`)
 
 ```text
 .swarm/
-├── config.json                  # Team roster (auto-generated)
+├── config.json                  # Team roster and settings snapshot
 ├── mailboxes/
 │   ├── oracle/
-│   │   ├── inbox/               # Unread messages
-│   │   └── processed/           # Read messages
+│   │   ├── inbox/
+│   │   └── processed/
 │   └── junior/
 │       ├── inbox/
 │       └── processed/
 ├── audit/
-│   └── mission-xyz.jsonl        # Append-only audit trail
+│   └── mission-xyz.jsonl
 └── missions/
-    └── mission-xyz.json         # Mission state for resume
+    └── mission-xyz.json
 ```
 
----
-
-## ⭐️ Credits & Inspiration
+## Credits & Inspiration
 
 This project is heavily inspired by **[Oh-My-Opencode](https://github.com/code-yeongyu/oh-my-opencode)**.
 
-We have adopted its core philosophies:
-- **Multi-Agent Orchestration**: Using specialized roles (Oracle, Librarian, Sisyphus) for distinct tasks.
-- **The "Manus Protocol"**: Using persistent markdown files (`task_plan.md`, `findings.md`) for state management. This pattern is heavily inspired by **[planning-with-files](https://github.com/OthmanAdi/planning-with-files)**.
-- **Ultrawork Loop**: The autonomous "Plan -> Act -> Verify" cycle.
+Key ideas adopted here:
 
-Huge thanks to the original creators for defining these agent interaction patterns.
+- **Multi-agent orchestration**: Specialized roles such as Oracle, Librarian, and Sisyphus
+- **The Manus Protocol**: Persistent markdown files for state management, with additional inspiration from **[planning-with-files](https://github.com/OthmanAdi/planning-with-files)**
+- **Ultrawork Loop**: A repeated `plan -> act -> verify` cycle for autonomous progress
+
+Thanks to the original creators for establishing these interaction patterns.

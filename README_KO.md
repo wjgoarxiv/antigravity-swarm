@@ -14,7 +14,7 @@
 </code></pre>
 
 <p align="center">
-  <strong>Antigravity CLI를 위한 별을 보는 프로젝트: <code>asw</code>를 입력하고, 작업을 별자리처럼 정렬하세요.</strong>
+  <strong>Antigravity CLI 워크플로 레이어: <code>asw</code>를 입력하고, 느슨한 요청을 계획된 에이전트 실행으로 바꾸세요.</strong>
 </p>
 
 <p align="center">

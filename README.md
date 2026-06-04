@@ -14,7 +14,7 @@
 </code></pre>
 
 <p align="center">
-  <strong>A stargazing project for Antigravity CLI: type <code>asw</code>, give the work a sky map, and let the agents line up.</strong>
+  <strong>Antigravity CLI workflow layer: type <code>asw</code> and turn a loose request into a planned agent run.</strong>
 </p>
 
 <p align="center">

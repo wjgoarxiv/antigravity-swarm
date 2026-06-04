@@ -12,7 +12,7 @@ test("#docs #README targets Antigravity CLI and documents ASW aliases", async ()
   assert.match(readme, /█████╗ ███████╗██╗\s+██╗/);
   assert.match(readme, /╚═╝  ╚═╝╚══════╝ ╚══╝╚══╝/);
   assert.match(readme, /img\.shields\.io/);
-  assert.match(readme, /stargazing project/i);
+  assert.match(readme, /workflow layer/i);
   assert.match(readme, /Mission Control/);
   assert.match(readme, /Large Update/);
   assert.match(readme, /Type `asw`/);
@@ -41,6 +41,7 @@ test("#docs #README targets Antigravity CLI and documents ASW aliases", async ()
   assert.doesNotMatch(readme, /Package Surface|pycache|files allowlist|tarball/i);
   assert.doesNotMatch(readme, /dependency-free spinner|evidence-driven|seamless|leverage|cutting-edge|robust|supercharge|next-level/i);
   assert.doesNotMatch(readme, /frictionless|game-changing|revolutionary|magic|10x|autonomous army|AI workforce/i);
+  assert.doesNotMatch(readme, /stargazing project|sky map|constellation/i);
   assert.equal(plugin.version, "0.2.1");
   assert.equal(plugin.name, "antigravity-swarm");
 });
@@ -53,7 +54,7 @@ test("#docs #Korean README and package metadata avoid deprecated Gemini-first in
   assert.match(readme, /█████╗ ███████╗██╗\s+██╗/);
   assert.match(readme, /╚═╝  ╚═╝╚══════╝ ╚══╝╚══╝/);
   assert.match(readme, /img\.shields\.io/);
-  assert.match(readme, /별을 보는 프로젝트|별자리|성좌/);
+  assert.match(readme, /워크플로 레이어/);
   assert.match(readme, /Mission Control/);
   assert.match(readme, /큰 업데이트/);
   assert.match(readme, /`asw`를 입력/);
@@ -72,6 +73,7 @@ test("#docs #Korean README and package metadata avoid deprecated Gemini-first in
   assert.doesNotMatch(readme, /py_compile|npm test|npm pack|agy plugin validate|훅 스모크|HUD 스모크|기존 Python|hook payload|`\\{\\}`|hooks\\.json/i);
   assert.doesNotMatch(readme, /dependency-free spinner|설치기는 interactive terminal|evidence-driven|seamless|leverage|cutting-edge|robust|supercharge|next-level/i);
   assert.doesNotMatch(readme, /frictionless|game-changing|revolutionary|magic|10x|autonomous army|AI workforce/i);
+  assert.doesNotMatch(readme, /별을 보는 프로젝트|별자리|성좌/);
   assert.doesNotMatch(readme, /패키지 표면|pycache|files allowlist|tarball/i);
   assert.doesNotMatch(readme, /REFERENCE_lazycodex|LazyCodex|OMO/);
   assert.doesNotMatch(readme, /antigravity-cli\/plugins|antigravity-cli\/skills/);

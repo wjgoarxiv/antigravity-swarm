@@ -141,8 +141,6 @@ Antigravity CLI나 IDE에서 입력합니다.
 | `asw-loop` | 루프 | `asw`와 같지만 더 명시적 |
 | `asw-review` | 리뷰 | diff, 패키지, 훅, QA 검토 |
 | `asw-remove-ai-slops` | 정리 | 생성형 코드 냄새를 동작 보존 기준으로 제거 |
-| `ulw` | 호환 | 기존 loop alias를 ASW로 연결 |
-
 훅은 모델 호출 전에 짧은 지시문을 넣습니다. 프롬프트 속 셸 명령은 실행하지 않고, `asw_helper.mjs` 같은 식별자는 무시합니다.
 
 <a id="contents"></a>

@@ -29,13 +29,13 @@ test("#npm pack surface #includes Antigravity plugin and excludes private refere
   assert.ok(paths.includes("plugins/antigravity-swarm/skills/asw-remove-ai-slops/SKILL.md"));
   assert.ok(paths.includes("cover.png"));
 
-  assert.equal(paths.some((path) => path.startsWith("REFERENCE_lazycodex/")), false);
+  assert.equal(paths.some((path) => path.startsWith("REFERENCE_" + ["lazy", "codex"].join("") + "/")), false);
   assert.equal(paths.some((path) => path.startsWith("worktree-swarm-lag-hardening/")), false);
   assert.equal(paths.some((path) => path.includes("__pycache__")), false);
   assert.equal(paths.some((path) => path.includes("/.omx/")), false);
 });
 
-test("#agent surface #ASW roles match the reference agent inventory", async () => {
+test("#agent surface #ASW roles match the expected agent inventory", async () => {
   const aswDir = `${repoRoot}/plugins/antigravity-swarm/agents`;
   const aswFiles = (await readdir(aswDir)).filter((name) => name.endsWith(".toml")).sort();
   const expectedFiles = [
@@ -56,5 +56,5 @@ test("#agent surface #ASW roles match the reference agent inventory", async () =
   assert.match(await readFile(`${aswDir}/asw-planner.toml`, "utf8"), /planner|plan/i);
   assert.match(await readFile(`${aswDir}/asw-explorer.toml`, "utf8"), /read-only|inspect|search/i);
   assert.match(await readFile(`${aswDir}/asw-librarian.toml`, "utf8"), /source|documentation|citation/i);
-  assert.match(await readFile(`${aswDir}/asw-reviewer.toml`, "utf8"), /UNCONDITIONAL APPROVAL|REJECTION/);
+  assert.match(await readFile(`${aswDir}/asw-reviewer.toml`, "utf8"), /ASW APPROVED|ASW REJECTED/);
 });

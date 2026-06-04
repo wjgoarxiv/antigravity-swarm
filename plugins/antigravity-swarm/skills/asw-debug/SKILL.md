@@ -15,3 +15,23 @@ Use this skill for real runtime failures.
 6. Add or update the narrowest regression check.
 7. Fix minimally, then rerun the original reproduction through the real surface.
 8. Remove temporary debugging artifacts and report the cleanup receipt.
+
+## Hypothesis Table
+
+Keep a small table while investigating:
+
+| Hypothesis | Evidence that supports it | Evidence that falsifies it | Next probe |
+|---|---|---|---|
+
+Use probes that distinguish between explanations. Re-running the same failing command without a new observation is not progress.
+
+## Runtime Evidence
+
+Choose the surface that matches the bug:
+
+- CLI: command transcript, exit code, stderr, config paths.
+- Web: browser screenshot, console log, network trace, route state.
+- API: request, response, status, logs, database row if relevant.
+- Desktop/IDE: visible UI state, settings file, extension/plugin registration, logs.
+
+After the fix, rerun the original reproduction first, then the broader regression suite.

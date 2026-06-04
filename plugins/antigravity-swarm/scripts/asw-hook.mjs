@@ -8,7 +8,7 @@ const PLAN_RE = new RegExp(`${WORD}(?:asw-plan|swarmwork-plan)${END}`, "i");
 const GOAL_RE = new RegExp(`${WORD}(?:asw-goal|swarmwork-goal)${END}`, "i");
 const START_WORK_RE = new RegExp(`${WORD}(?:start-work|asw-start-work|swarmwork-start)${END}`, "i");
 const CLEANUP_RE = new RegExp(`${WORD}(?:asw-cleanup|asw-remove-ai-slops|swarmwork-cleanup)${END}`, "i");
-const LOOP_RE = new RegExp(`${WORD}(?:asw-loop|asw|swarmwork|ulw)${END}`, "i");
+const LOOP_RE = new RegExp(`${WORD}(?:asw-loop|asw|swarmwork)${END}`, "i");
 const REVIEW_RE = new RegExp(`${WORD}(?:asw-review|swarmwork-review)${END}`, "i");
 
 function readPayload() {
@@ -76,7 +76,7 @@ You are Antigravity Swarm's planning specialist. Convert the user request into a
 Required behavior:
 - Ground the plan in the current repository before asking questions.
 - Use Antigravity subagents for independent research, implementation, or review lanes.
-- Write the plan to .omo/plans/<slug>.md with ## TL;DR, ## TODOs, exact files, tests, hook surfaces, and manual QA commands.
+- Write the plan to .asw/plans/<slug>.md with ## TL;DR, ## TODOs, exact files, tests, hook surfaces, and manual QA commands.
 - Make every TODO atomic: lane, files, RED test or reproduction, GREEN command, real-surface QA channel, artifact path, and cleanup receipt.
 - Include happy-path, edge-case, and adjacent-surface regression QA scenarios; tests are supporting evidence, not completion proof.
 - Include privacy/package safeguards and cleanup receipts for any spawned QA state.
@@ -99,11 +99,11 @@ const START_WORK_DIRECTIVE = `ASW START-WORK MODE ENABLED!
 You are Antigravity Swarm's plan executor. Execute an existing ASW plan until every top-level checkbox is complete.
 
 Required behavior:
-- Select the named plan, or the only active plan under .omo/plans when the user did not name one.
+- Select the named plan, or the only active plan under .asw/plans when the user did not name one.
 - Re-read the plan before each step and execute the first unchecked top-level checkbox.
 - Use Antigravity subagents for independent subtasks; keep dependent edits serialized.
 - For every checkbox, capture RED-to-GREEN tests, real-surface QA, adversarial checks where relevant, and cleanup receipts before marking it done.
-- Keep local continuation state in .omo/start-work/ and update the plan only after verification passes.
+- Keep local continuation state in .asw/start-work/ and update the plan only after verification passes.
 - When all top-level checkboxes are complete, print ORCHESTRATION COMPLETE with the plan path, verification commands, artifacts, and cleanup receipts.`;
 
 const CLEANUP_DIRECTIVE = `ASW CLEANUP MODE ENABLED!

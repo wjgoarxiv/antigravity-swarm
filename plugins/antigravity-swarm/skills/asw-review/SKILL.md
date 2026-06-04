@@ -16,3 +16,31 @@ Lead with findings. Prioritize:
 - Hook, LSP, or skill manifests that do not match Antigravity CLI contracts.
 - README claims that do not match tested behavior.
 
+## Review Format
+
+Lead with findings:
+
+```text
+Findings
+- [severity] path:line - issue, impact, evidence needed
+
+Open Questions
+- ...
+
+Verification Reviewed
+- ...
+```
+
+No findings means say that clearly, then list residual risks or test gaps.
+
+## Release-Surface Checks
+
+For packages and plugins, inspect:
+
+- git status and ignored private folders,
+- npm or plugin package contents,
+- installed file layout,
+- hook manifests,
+- skill and agent inventory,
+- README examples against real output,
+- private/reference wording and internal notes.

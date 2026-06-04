@@ -15,3 +15,26 @@ Use this skill when a task spans turns, sessions, or multiple deliverables.
 6. Before completion, audit every criterion against current files and command output.
 
 Do not call a goal done because tests are green. Green tests are one signal; observable behavior is the gate.
+
+## Goal Ledger
+
+Use `.asw/goals/<slug>.md` when a durable local ledger is needed. Keep it small:
+
+- objective,
+- success criteria,
+- current evidence,
+- open blockers,
+- cleanup items,
+- final audit.
+
+Do not store secrets, private transcripts, package tokens, or personal local paths that are not needed for execution.
+
+## Completion Audit
+
+Before closing the goal:
+
+- Re-read the newest user request.
+- Check every success criterion against current evidence.
+- Verify package/git boundaries when files may ship.
+- Confirm that background processes, temp directories, and generated QA artifacts are either cleaned up or intentionally named.
+- Report the exact remaining risk if any criterion is only partially verified.

@@ -141,8 +141,6 @@ Type these in Antigravity CLI or IDE:
 | `asw-loop` | loop | Same as `asw`, more explicit |
 | `asw-review` | review | Diff, package, hook, and QA review |
 | `asw-remove-ai-slops` | cleanup | Remove generated-looking clutter while preserving behavior |
-| `ulw` | compatibility | Old loop alias mapped into ASW |
-
 The hook injects a short directive before the model call. It does not run shell commands from the prompt and ignores identifier-like text such as `asw_helper.mjs`.
 
 <a id="contents"></a>

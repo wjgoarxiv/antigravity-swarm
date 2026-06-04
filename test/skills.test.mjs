@@ -8,7 +8,7 @@ const repoRoot = new URL("..", import.meta.url).pathname;
 test("#asw-plan skill #requires executable start-work handoff", async () => {
   const skill = await readFile(join(repoRoot, "plugins", "antigravity-swarm", "skills", "asw-plan", "SKILL.md"), "utf8");
 
-  assert.match(skill, /\.omo\/plans\/<slug>\.md/);
+  assert.match(skill, /\.asw\/plans\/<slug>\.md/);
   assert.match(skill, /## TL;DR/);
   assert.match(skill, /## TODOs/);
   assert.match(skill, /QA scenarios/);

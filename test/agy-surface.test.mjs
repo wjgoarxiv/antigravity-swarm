@@ -24,12 +24,12 @@ test("#agents #planner and reviewer preserve ASW execution contracts", async () 
   const planner = await readFile(`${repoRoot}/plugins/antigravity-swarm/agents/asw-planner.toml`, "utf8");
   const reviewer = await readFile(`${repoRoot}/plugins/antigravity-swarm/agents/asw-reviewer.toml`, "utf8");
 
-  assert.match(planner, /\.omo\/plans\/<slug>\.md/);
+  assert.match(planner, /\.asw\/plans\/<slug>\.md/);
   assert.match(planner, /## TODOs/);
   assert.match(planner, /Next: start-work <plan-name>/);
   assert.match(planner, /real-surface QA/i);
 
-  assert.match(reviewer, /UNCONDITIONAL APPROVAL/);
-  assert.match(reviewer, /REJECTION/);
+  assert.match(reviewer, /ASW APPROVED/);
+  assert.match(reviewer, /ASW REJECTED/);
   assert.match(reviewer, /missing evidence/i);
 });

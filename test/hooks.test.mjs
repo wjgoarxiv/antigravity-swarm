@@ -31,14 +31,14 @@ test("#asw hook #injects plan directive for Antigravity PreInvocation payload", 
   assert.equal(output.injectSteps.length, 1);
   assert.match(output.injectSteps[0].userMessage, /ASW PLAN MODE ENABLED/);
   assert.match(output.injectSteps[0].userMessage, /Antigravity CLI/);
-  assert.match(output.injectSteps[0].userMessage, /\.omo\/plans\/<slug>\.md/);
+  assert.match(output.injectSteps[0].userMessage, /\.asw\/plans\/<slug>\.md/);
   assert.match(output.injectSteps[0].userMessage, /## TODOs/);
   assert.match(output.injectSteps[0].userMessage, /Next: start-work <plan-name>/);
   assert.doesNotMatch(output.injectSteps[0].userMessage, /Let me know if you would like to proceed/i);
 });
 
-test("#asw hook #injects loop directive for asw and ulw compatibility aliases", () => {
-  for (const prompt of ["asw fix this", "ulw fix this"]) {
+test("#asw hook #injects loop directive for ASW aliases", () => {
+  for (const prompt of ["asw fix this", "asw-loop fix this", "swarmwork fix this"]) {
     const result = runHook(hookPath, { prompt, workspacePaths: [repoRoot] });
     assert.equal(result.status, 0, result.stderr);
     const output = JSON.parse(result.stdout);
@@ -56,7 +56,7 @@ test("#asw hook #injects goal directive for durable goal alias", () => {
 });
 
 test("#asw hook #injects start-work directive for plan execution aliases", () => {
-  for (const prompt of ["start-work asw-v021", "asw-start-work .omo/plans/asw-v021.md"]) {
+  for (const prompt of ["start-work asw-v021", "asw-start-work .asw/plans/asw-v021.md"]) {
     const result = runHook(hookPath, { prompt, workspacePaths: [repoRoot] });
     assert.equal(result.status, 0, result.stderr);
     const output = JSON.parse(result.stdout);

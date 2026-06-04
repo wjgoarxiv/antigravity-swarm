@@ -19,3 +19,24 @@ Use this skill when a plan exists or the work is clear enough to execute.
 
 Never claim completion from tests alone.
 
+## Subagent Use
+
+- Explorer lane: locate owners, tests, configs, and prior art.
+- Librarian lane: check current official docs for libraries or external CLIs.
+- Reviewer lane: inspect the diff after implementation.
+- Keep all write operations in the execution lane unless the caller explicitly delegates file edits.
+
+## Evidence Ledger
+
+For each criterion, keep a terse ledger:
+
+```text
+Criterion:
+RED:
+Change:
+GREEN:
+Real surface:
+Cleanup:
+```
+
+If any row is empty, the loop is still running.

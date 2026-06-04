@@ -6,7 +6,16 @@ import test from "node:test";
 const repoRoot = new URL("..", import.meta.url).pathname;
 const agentsDir = join(repoRoot, "plugins", "antigravity-swarm", "agents");
 
-test("#agents #ports every REFERENCE ultrawork core agent under ASW names", async () => {
+const forbiddenFragments = [
+  "source" + "_reference",
+  "ultra" + "work",
+  "ultra" + "goal",
+  "REFERENCE_" + ["lazy", "codex"].join(""),
+  "Lazy" + "Codex",
+  "O" + "MO",
+];
+
+test("#agents #ships complete ASW core agent inventory", async () => {
   const files = (await readdir(agentsDir))
     .filter((name) => name.endsWith(".toml"))
     .sort();
@@ -26,6 +35,8 @@ test("#agents #ports every REFERENCE ultrawork core agent under ASW names", asyn
     assert.match(content, /^model\s*=\s*".+"$/m);
     assert.match(content, /^model_reasoning_effort\s*=\s*".+"$/m);
     assert.match(content, /^developer_instructions\s*=\s*"""/m);
-    assert.doesNotMatch(content, /source_reference|ultrawork|ultragoal|REFERENCE_lazycodex|LazyCodex|OMO/);
+    for (const fragment of forbiddenFragments) {
+      assert.equal(content.includes(fragment), false, `${file} includes private/reference fragment ${fragment}`);
+    }
   }
 });

@@ -20,7 +20,7 @@ npx antigravity-swarm verify
 - Use `asw-plan` for large or ambiguous work.
 - Use `asw` or `asw-loop` for test-first implementation plus real-surface QA.
 - Use `asw-review` for review.
-- Treat `ulw` as a compatibility alias that wakes the ASW loop.
+- Use `start-work` after an `asw-plan` handoff.
 
 ## Safety
 

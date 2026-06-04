@@ -88,7 +88,7 @@ test("#installer install+verify #copies plugin skills hooks and manifest", async
     assert.match(goalSkill, /observable evidence/);
 
     const agent = await readFile(join(target, "plugins", "antigravity-swarm", "agents", "asw-reviewer.toml"), "utf8");
-    assert.match(agent, /UNCONDITIONAL APPROVAL/);
+    assert.match(agent, /ASW APPROVED/);
   } finally {
     await rm(target, { recursive: true, force: true });
   }

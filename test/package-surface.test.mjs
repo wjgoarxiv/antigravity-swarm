@@ -4,6 +4,12 @@ import { spawnSync } from "node:child_process";
 import test from "node:test";
 
 const repoRoot = new URL("..", import.meta.url).pathname;
+const expectedAgentFiles = [
+  "asw-explorer.toml",
+  "asw-librarian.toml",
+  "asw-planner.toml",
+  "asw-reviewer.toml",
+];
 
 test("#npm pack surface #includes Antigravity plugin and excludes private references", () => {
   const result = spawnSync("npm", ["pack", "--dry-run", "--json"], {
@@ -20,7 +26,9 @@ test("#npm pack surface #includes Antigravity plugin and excludes private refere
   assert.ok(paths.includes("bin/installer/commands.mjs"));
   assert.ok(paths.includes("bin/installer/ui.mjs"));
   assert.ok(paths.includes("plugins/antigravity-swarm/plugin.json"));
-  assert.ok(paths.includes("plugins/antigravity-swarm/agents/asw-reviewer.toml"));
+  for (const agentFile of expectedAgentFiles) {
+    assert.ok(paths.includes(`plugins/antigravity-swarm/agents/${agentFile}`));
+  }
   assert.ok(paths.includes("plugins/antigravity-swarm/hooks/hooks.json"));
   assert.ok(paths.includes("plugins/antigravity-swarm/scripts/asw-statusline.mjs"));
   assert.ok(paths.includes("plugins/antigravity-swarm/skills/asw-goal/SKILL.md"));
@@ -38,12 +46,7 @@ test("#npm pack surface #includes Antigravity plugin and excludes private refere
 test("#agent surface #ASW roles match the expected agent inventory", async () => {
   const aswDir = `${repoRoot}/plugins/antigravity-swarm/agents`;
   const aswFiles = (await readdir(aswDir)).filter((name) => name.endsWith(".toml")).sort();
-  const expectedFiles = [
-    "asw-explorer.toml",
-    "asw-librarian.toml",
-    "asw-planner.toml",
-    "asw-reviewer.toml",
-  ];
+  const expectedFiles = expectedAgentFiles;
 
   assert.deepEqual(expectedFiles, aswFiles);
 

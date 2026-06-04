@@ -31,8 +31,11 @@ test("#docs #README targets Antigravity CLI and documents ASW aliases", async ()
   assert.match(readme, /`asw-remove-ai-slops`/);
   assert.match(readme, /LSP diagnostics/);
   assert.match(readme, /status line/i);
+  assert.match(readme, /GPT-OSS 120B \(Medium\)/);
+  assert.match(readme, /ctx \[█▋\] 81%\/131k/);
   assert.match(readme, /mq G-f\(M\)/);
   assert.match(readme, /model quota/i);
+  assert.doesNotMatch(readme, /5h \[▏░\]|1w \[▊░\]|G-f \(Medium\) 3\.5 │ ctx \[▎░\] 9%\/1000k/);
   assert.match(readme, /~\/\.gemini\/config/);
   assert.doesNotMatch(readme, /py_compile|npm test|npm pack|agy plugin validate|Manual hook smoke|Manual HUD smoke|Legacy Python|hook payloads|returns `\\{\\}`|hooks\\.json/i);
   assert.doesNotMatch(readme, /Core runtime used by the agents/);
@@ -67,8 +70,11 @@ test("#docs #Korean README and package metadata avoid deprecated Gemini-first in
   assert.match(readme, /`asw-start-work`/);
   assert.match(readme, /`asw-remove-ai-slops`/);
   assert.match(readme, /statusLine/);
+  assert.match(readme, /GPT-OSS 120B \(Medium\)/);
+  assert.match(readme, /ctx \[█▋\] 81%\/131k/);
   assert.match(readme, /mq G-f\(M\)/);
   assert.match(readme, /model quota/i);
+  assert.doesNotMatch(readme, /5h \[▏░\]|1w \[▊░\]|G-f \(Medium\) 3\.5 │ ctx \[▎░\] 9%\/1000k/);
   assert.match(readme, /~\/\.gemini\/config/);
   assert.doesNotMatch(readme, /py_compile|npm test|npm pack|agy plugin validate|훅 스모크|HUD 스모크|기존 Python|hook payload|`\\{\\}`|hooks\\.json/i);
   assert.doesNotMatch(readme, /dependency-free spinner|설치기는 interactive terminal|evidence-driven|seamless|leverage|cutting-edge|robust|supercharge|next-level/i);

@@ -179,13 +179,13 @@ ASW includes a diagnostics hook and skill guidance for running real language che
 <a id="status-line"></a>
 ## Status Line
 
-The HUD renders a compact line:
+The typical HUD line is compact:
 
 ```text
-[✨ASW v0.2.1] | G-f (Medium) 3.5 │ ctx [▎░] 9%/1000k │ 5h [▏░] 4% ↻2h15m │ 1w [▊░] 35% ↻3d6h │ git main +3 ✓
+[✨ASW v0.2.1] │ GPT-OSS 120B (Medium) │ ctx [█▋] 81%/131k
 ```
 
-When Antigravity passes `/usage` model quota rows into the status line payload, ASW adds a compact model quota segment:
+If Antigravity passes `/usage` model quota rows into the status line payload, ASW can append a compact quota segment:
 
 ```text
 mq G-f(M) [█░] 60% · G-f(H) 60% · G-f(L) 60% · G-p(L) 60% ↻6d22h

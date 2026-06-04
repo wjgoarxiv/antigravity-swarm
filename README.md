@@ -4,7 +4,10 @@
 
 <h1 align="center">Antigravity Swarm</h1>
 
-<pre align="center"><code>
+<table align="center">
+<tr>
+<td>
+<pre><code>
  █████╗ ███████╗██╗    ██╗
 ██╔══██╗██╔════╝██║    ██║
 ███████║███████╗██║ █╗ ██║
@@ -12,6 +15,9 @@
 ██║  ██║███████║╚███╔███╔╝
 ╚═╝  ╚═╝╚══════╝ ╚══╝╚══╝
 </code></pre>
+</td>
+</tr>
+</table>
 
 <p align="center">
   <strong>Antigravity CLI workflow layer: type <code>asw</code> and turn a loose request into a planned agent run.</strong>

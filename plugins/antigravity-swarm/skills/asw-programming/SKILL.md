@@ -69,6 +69,54 @@ Use RED to GREEN for behavior changes:
 
 For refactors, write or identify characterization coverage first. The test should be green before the refactor and stay green after.
 
+### Test Pyramid
+
+Use the smallest test that proves the behavior, then climb only when needed:
+
+- pure function tests for deterministic formatting and parsing,
+- command tests for CLI arguments and stdout,
+- file-system tests for installers and package layout,
+- hook payload tests for Antigravity lifecycle behavior,
+- integration tests for config merge and installed paths,
+- manual QA for terminal rendering, browser rendering, IDE behavior, or generated images.
+
+Avoid replacing a narrow deterministic test with a broad smoke test. Broad smoke tests are useful after the narrow test has made the failure easy to locate.
+
+### Given / When / Then
+
+Behavior tests should make the scenario obvious:
+
+- Given: existing config, payload, files, flags, or state.
+- When: the command, hook, helper, or UI action runs.
+- Then: the observable output, file, error, or status line is asserted.
+
+BDD comments are allowed when they clarify the shape of the scenario. Do not delete them as clutter.
+
+### Less Mocking
+
+Prefer real temp directories, real files, real JSON parsing, real process execution, and real stdout when the behavior depends on those surfaces.
+
+Mocks are appropriate when:
+
+- the external service is slow or unavailable,
+- the test would mutate a real user account,
+- the dependency is nondeterministic,
+- the mock captures a stable contract.
+
+If a mock hides path handling, shell output, terminal width, package contents, or config merge behavior, it is probably the wrong test.
+
+### Prompt And Skill Tests
+
+Markdown skills and agent prompts are product code in this repo. Test them when they define behavior:
+
+- inventory tests for names,
+- section tests for required execution contracts,
+- residue tests for private terminology,
+- line-depth tests when a port must preserve operational substance,
+- README tests when examples must match hook or HUD output.
+
+Do not treat docs as harmless if users copy commands from them.
+
 ## TypeScript And JavaScript
 
 Prefer:
@@ -154,6 +202,57 @@ Avoid:
 - hidden clones in loops,
 - unsafe code unless the task explicitly requires it and tests cover it.
 
+## Cross-language Iron List
+
+These rules apply everywhere:
+
+- no behavior change without behavior proof,
+- no catch-all type when variants are known,
+- no duplicate validation inside trusted internal paths,
+- no global mutable state unless it is the platform contract,
+- no hidden IO inside pure-named helpers,
+- no silent fallback that hides broken config,
+- no broad exception swallowing,
+- no public API removal without explicit request,
+- no generated asset change without regeneration proof,
+- no package surface claim without dry-run evidence,
+- no user-visible text drift from README examples,
+- no oversized module split by arbitrary chunk names,
+- no new dependency for a small local helper,
+- no final status that hides skipped checks.
+
+## Canonical Libraries
+
+Prefer established standard or project-local facilities:
+
+- filesystem paths through the language path library,
+- JSON through structured parsers,
+- TOML/YAML through the project parser when already present,
+- CLI args through the existing command parser,
+- subprocesses through explicit argv arrays,
+- colors through the existing palette or UI helper,
+- terminal rendering through tested width-aware helpers,
+- image generation through deterministic scripts,
+- package validation through the package manager,
+- plugin validation through the Antigravity CLI.
+
+Adding a dependency is justified only when it removes real complexity and is acceptable for the package surface.
+
+## Modern Toolchain Expectations
+
+Before adding new tools, inspect what the repo already uses. Prefer:
+
+- `npm test` or the package's test script for Node repos,
+- project typecheck when configured,
+- focused `node --test` files for fast RED/GREEN,
+- `python3 -m py_compile` for standalone Python scripts,
+- project linters when present,
+- package dry-run for npm shipping,
+- plugin validation for Antigravity plugins,
+- temp install smoke for installer changes.
+
+If a tool is absent, say `N/A` with reason instead of pretending the check passed.
+
 ## Implementation Order
 
 1. Read local rules and nearby patterns.
@@ -186,6 +285,58 @@ Measure pure LOC for files that feel oversized. If a file is over 250 pure LOC:
 - avoid catch-all names like `utils` or `helpers`.
 
 Standalone scripts may exceed the ceiling only when they are truly one responsibility and easier to ship as one file.
+
+## 250 Pure LOC Ceiling
+
+The 250 pure LOC ceiling is architectural pressure, not a style game. Count non-blank, non-comment lines. When a source file crosses the ceiling:
+
+1. Identify responsibilities.
+2. Name the owner module for each responsibility.
+3. Split by concept.
+4. Preserve public imports through logic-free re-exports when needed.
+5. Run tests after each split.
+6. Re-check the line count.
+
+Forbidden escapes:
+
+- "It is generated" when it is actually source,
+- "It is almost 250",
+- `utils`, `helpers`, `common`, `part1`, or chunk-number names,
+- moving code without moving tests,
+- counting comments or blanks to justify staying.
+
+Acceptable exceptions are rare. They require a note explaining why the file is one responsibility and easier to maintain as one file.
+
+## Post-write Review Loop
+
+After writing code, review it before claiming completion:
+
+1. Measure changed source files that may be oversized.
+2. Re-read the diff as a reviewer.
+3. Check for behavior drift.
+4. Check for missing tests.
+5. Check for boundary validation.
+6. Check for duplicated parsing.
+7. Check for broad catches.
+8. Check for stale docs or examples.
+9. Check for package/private leakage.
+10. Run the verification plan.
+
+If the diff would make you ask a reviewer to trust intent instead of evidence, add evidence.
+
+## Companion Skills
+
+Invoke or follow the relevant ASW skill when the request crosses into another mode:
+
+- use `asw-refactor` for behavior-preserving structural change,
+- use `asw-debug` for runtime failures,
+- use `asw-review` before release or merge claims,
+- use `asw-remove-ai-slops` for branch-wide generated-looking cleanup,
+- use `asw-lsp` for diagnostics when language tooling matters,
+- use `asw-ui-ux` for visual, README, terminal UI, and cover work,
+- use `asw-plan` when scope is broad and execution should wait for a plan.
+
+Do not blend all modes into one vague implementation pass. Name the mode and use its safety contract.
 
 ## Package And Hook Work
 

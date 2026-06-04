@@ -32,7 +32,11 @@ yarn-error.log
 # Gemini / Antigravity
 .gemini/
 .antigravity/
+.omo/
+.omx/
+.agents/.runtime/
 .swarm/
+REFERENCE/
 
 # Oh-My-Claudecode
 .omc/
@@ -48,11 +52,15 @@ findings.md
 progress.md
 task_plan.md
 NEW-PRMT.md
+HANDOFF.md
+
 
 # Runtime Artifacts
 logs/
 subagents.yaml
 *.bak
+worktree-swarm-lag-hardening/
+system-prompt-extraction/
 
 # Local env / secrets
 .env

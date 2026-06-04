@@ -1,7 +1,0 @@
-{
-  "name": "antigravity-swarm",
-  "version": "0.1.0",
-  "description": "Deploys autonomous sub-agents to perform tasks in the Antigravity IDE.",
-  "publisher": "antigravity",
-  "contextFileName": "GEMINI.md"
-}

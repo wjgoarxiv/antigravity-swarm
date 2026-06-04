@@ -1,17 +1,43 @@
 {
   "name": "antigravity-swarm",
-  "version": "0.1.0",
-  "description": "Antigravity Sub-Agents Swarm Orchestrator",
-  "main": "scripts/orchestrator.py",
+  "version": "0.2.1",
+  "description": "Antigravity CLI plugin, skills, hooks, HUD, and installer for ASW workflows.",
+  "type": "module",
+  "bin": {
+    "antigravity-swarm": "bin/antigravity-swarm.js"
+  },
+  "files": [
+    "bin",
+    "plugins/antigravity-swarm",
+    "README.md",
+    "README_KO.md",
+    "cover.png",
+    "LICENSE"
+  ],
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node --test test/*.test.mjs",
+    "pack:dry-run": "npm pack --dry-run --json"
   },
   "keywords": [
-    "gemini",
-    "agent",
-    "swarm",
-    "orchestration"
+    "antigravity",
+    "antigravity-cli",
+    "agent-skills",
+    "hooks",
+    "lsp",
+    "subagents",
+    "swarm"
   ],
-  "author": "Antigravity",
-  "license": "MIT"
+  "author": "Antigravity Swarm Contributors",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/wjgoarxiv/antigravity-swarm.git"
+  },
+  "bugs": {
+    "url": "https://github.com/wjgoarxiv/antigravity-swarm/issues"
+  },
+  "homepage": "https://github.com/wjgoarxiv/antigravity-swarm#readme",
+  "engines": {
+    "node": ">=18"
+  }
 }

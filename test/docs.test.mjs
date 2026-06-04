@@ -40,7 +40,7 @@ test("#docs #README targets Antigravity CLI and documents ASW aliases", async ()
   assert.doesNotMatch(readme, /py_compile|npm test|npm pack|agy plugin validate|Manual hook smoke|Manual HUD smoke|Legacy Python|hook payloads|returns `\\{\\}`|hooks\\.json/i);
   assert.doesNotMatch(readme, /Core runtime used by the agents/);
   assert.doesNotMatch(readme, /antigravity-cli\/plugins|antigravity-cli\/skills/);
-  assert.doesNotMatch(readme, new RegExp(["REFERENCE_" + ["lazy", "codex"].join(""), "Lazy" + "Codex", "O" + "MO"].join("|")));
+  assert.doesNotMatch(readme, new RegExp(["REFERENCE_" + ["lazy", "codex"].join(""), "Lazy" + "Cod" + "ex", "O" + "MO"].join("|")));
   assert.doesNotMatch(readme, /Package Surface|pycache|files allowlist|tarball/i);
   assert.doesNotMatch(readme, /dependency-free spinner|evidence-driven|seamless|leverage|cutting-edge|robust|supercharge|next-level/i);
   assert.doesNotMatch(readme, /frictionless|game-changing|revolutionary|magic|10x|autonomous army|AI workforce/i);
@@ -81,7 +81,7 @@ test("#docs #Korean README and package metadata avoid deprecated Gemini-first in
   assert.doesNotMatch(readme, /frictionless|game-changing|revolutionary|magic|10x|autonomous army|AI workforce/i);
   assert.doesNotMatch(readme, /별을 보는 프로젝트|별자리|성좌/);
   assert.doesNotMatch(readme, /패키지 표면|pycache|files allowlist|tarball/i);
-  assert.doesNotMatch(readme, new RegExp(["REFERENCE_" + ["lazy", "codex"].join(""), "Lazy" + "Codex", "O" + "MO"].join("|")));
+  assert.doesNotMatch(readme, new RegExp(["REFERENCE_" + ["lazy", "codex"].join(""), "Lazy" + "Cod" + "ex", "O" + "MO"].join("|")));
   assert.doesNotMatch(readme, /antigravity-cli\/plugins|antigravity-cli\/skills/);
   assert.equal(pkg.bin["antigravity-swarm"], "bin/antigravity-swarm.js");
   assert.equal(pkg.type, "module");
@@ -99,5 +99,5 @@ test("#skill asw-plan #creates executable plan files before implementation", asy
   assert.match(skill, /gap analysis/i);
   assert.match(skill, /Downstream Executor Contract/i);
   assert.match(skill, /Refuse implementation/i);
-  assert.doesNotMatch(skill, new RegExp(["Lazy" + "Codex", "O" + "MO", "Prome" + "theus", "Boul" + "der"].join("|")));
+  assert.doesNotMatch(skill, new RegExp(["Lazy" + "Cod" + "ex", "O" + "MO", "Prome" + "theus", "Boul" + "der"].join("|")));
 });

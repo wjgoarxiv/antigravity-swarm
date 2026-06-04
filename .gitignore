@@ -38,6 +38,7 @@ yarn-error.log
 .agents/.runtime/
 .swarm/
 REFERENCE/
+REFERENCE_lazycodex/
 
 # Oh-My-Claudecode
 .omc/

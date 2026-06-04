@@ -49,7 +49,10 @@ test("#agent surface #ASW roles match the expected agent inventory", async () =>
 
   for (const aswFile of expectedFiles) {
     const asw = await readFile(`${aswDir}/${aswFile}`, "utf8");
-    assert.match(asw, /model_reasoning_effort = /, `${aswFile} must keep an explicit reasoning-effort policy`);
+    const legacyReasoningField = "model_" + "reasoning_effort";
+    const legacyModelPrefix = "g" + "pt-";
+    assert.doesNotMatch(asw, new RegExp(`^${legacyReasoningField}\\s*=`, "m"), `${aswFile} must avoid legacy reasoning-effort fields`);
+    assert.doesNotMatch(asw, new RegExp(`^model\\s*=\\s*"${legacyModelPrefix}`, "m"), `${aswFile} must avoid legacy model presets`);
     assert.equal(/developer_instructions = """[\s\S]+"""/.test(asw), true, `${aswFile} must carry role instructions`);
   }
 

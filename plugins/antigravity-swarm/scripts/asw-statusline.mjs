@@ -2,7 +2,7 @@
 
 import { stdin, stdout } from "node:process";
 
-const ASW_VERSION = "0.2.1";
+const ASW_VERSION = "0.2.2";
 const palette = {
   cyan: "38;5;51",
   blue: "38;5;75",

@@ -25,7 +25,7 @@
 
 <p align="center">
   <img alt="Antigravity CLI" src="https://img.shields.io/badge/Antigravity-CLI-00D5FF?style=for-the-badge&labelColor=111827" />
-  <img alt="ASW v0.2.1" src="https://img.shields.io/badge/ASW-v0.2.1-8B5CF6?style=for-the-badge&labelColor=111827" />
+  <img alt="ASW v0.2.2" src="https://img.shields.io/badge/ASW-v0.2.2-8B5CF6?style=for-the-badge&labelColor=111827" />
   <img alt="Hooks skills agents HUD" src="https://img.shields.io/badge/hooks%20%2B%20skills%20%2B%20agents-HUD-22C55E?style=for-the-badge&labelColor=111827" />
   <img alt="MIT license" src="https://img.shields.io/badge/license-MIT-F59E0B?style=for-the-badge&labelColor=111827" />
 </p>
@@ -41,7 +41,7 @@
 
 Antigravity Swarm installs an ASW workflow layer for Antigravity CLI and Antigravity IDE. It bundles short wake words, global skills, hook routes, subagent presets, diagnostics guidance, background continuation, and a compact status line.
 
-The old repo was a Gemini-first swarm runner. v0.2.1 is the large Antigravity rebuild: npm install, Antigravity-native plugin layout, ASW aliases, hooks, subagents, LSP diagnostics, and a HUD that can surface context, git state, and model quota data when the CLI provides it.
+The old repo was a Gemini-first swarm runner. v0.2.2 is the large Antigravity rebuild: npm install, Antigravity-native plugin layout, ASW aliases, hooks, subagents, LSP diagnostics, and a HUD that can surface context, git state, and model quota data when the CLI provides it.
 
 > [!IMPORTANT]
 > Type `asw` when the work is ready to move. Type `asw-plan` when the work needs shape first. Type `asw-review` before you call it done.
@@ -90,7 +90,7 @@ ASW writes the plugin under `~/.gemini/config/`, installs global skill shims, an
 <a id="large-update"></a>
 ## Large Update
 
-v0.2.1 is not a rename pass. It moves the project from a script-oriented swarm into an Antigravity workflow package.
+v0.2.2 is not a rename pass. It moves the project from a script-oriented swarm into an Antigravity workflow package.
 
 | Before | Now |
 |---|---|
@@ -182,7 +182,7 @@ ASW includes a diagnostics hook and skill guidance for running real language che
 The typical HUD line is compact:
 
 ```text
-[✨ASW v0.2.1] │ GPT-OSS 120B (Medium) │ ctx [█▋] 81%/131k
+[✨ASW v0.2.2] │ GPT-OSS 120B (Medium) │ ctx [█▋] 81%/131k
 ```
 
 If Antigravity passes `/usage` model quota rows into the status line payload, ASW can append a compact quota segment:

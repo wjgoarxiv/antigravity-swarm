@@ -23,7 +23,7 @@ test("#npm pack surface #includes Antigravity plugin and excludes private refere
   const [{ files, version }] = JSON.parse(result.stdout);
   const paths = files.map((file) => file.path);
 
-  assert.equal(version, "0.2.1");
+  assert.equal(version, "0.2.2");
   assert.ok(paths.includes("bin/antigravity-swarm.js"));
   assert.ok(paths.includes("bin/installer/commands.mjs"));
   assert.ok(paths.includes("bin/installer/ui.mjs"));

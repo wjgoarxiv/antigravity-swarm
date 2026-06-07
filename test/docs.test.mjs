@@ -48,7 +48,7 @@ test("#docs #README targets Antigravity CLI and documents ASW aliases", async ()
   assert.doesNotMatch(readme, /dependency-free spinner|evidence-driven|seamless|leverage|cutting-edge|robust|supercharge|next-level/i);
   assert.doesNotMatch(readme, /frictionless|game-changing|revolutionary|magic|10x|autonomous army|AI workforce/i);
   assert.doesNotMatch(readme, /stargazing project|sky map|constellation/i);
-  assert.equal(plugin.version, "0.2.1");
+  assert.equal(plugin.version, "0.2.2");
   assert.equal(plugin.name, "antigravity-swarm");
 });
 
@@ -91,7 +91,7 @@ test("#docs #Korean README and package metadata avoid deprecated Gemini-first in
   assert.doesNotMatch(readme, /antigravity-cli\/plugins|antigravity-cli\/skills/);
   assert.equal(pkg.bin["antigravity-swarm"], "bin/antigravity-swarm.js");
   assert.equal(pkg.type, "module");
-  assert.equal(pkg.version, "0.2.1");
+  assert.equal(pkg.version, "0.2.2");
   assert.ok(pkg.files.includes("plugins/antigravity-swarm"));
 });
 

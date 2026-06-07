@@ -1,6 +1,6 @@
 {
   "name": "antigravity-swarm",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Antigravity CLI plugin, skills, hooks, HUD, and installer for ASW workflows.",
   "type": "module",
   "bin": {

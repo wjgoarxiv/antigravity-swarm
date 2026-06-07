@@ -48,7 +48,7 @@ test("#installer install+verify #copies plugin skills hooks and manifest", async
   try {
     const install = runCli(["install", "--target", target]);
     assert.equal(install.status, 0, install.stderr);
-    assert.match(install.stdout, /ASW\s+v0\.2\.1/);
+    assert.match(install.stdout, /ASW\s+v0\.2\.2/);
     assert.match(install.stdout, /ANTIGRAVITY SWARM/);
     assert.match(install.stdout, /Hooks · Skills · HUD · Agents/);
     assert.match(install.stdout, /Install target/);

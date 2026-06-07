@@ -14,7 +14,7 @@ test("#agy plugin validate #processes Antigravity Swarm hooks", () => {
 
   assert.equal(result.status, 0, result.stderr);
   assert.match(result.stdout, /skills\s+:\s+15 processed/);
-  assert.match(result.stdout, /agents\s+:\s+4 processed/);
+  assert.match(result.stdout, /agents\s+:\s+6 processed/);
   assert.match(result.stdout, /hooks\s+:\s+1 processed/);
   assert.doesNotMatch(result.stdout, /agents\s+:\s+skipped \(not found\)/);
   assert.doesNotMatch(result.stdout, /hooks\s+:\s+skipped \(not found\)/);
@@ -22,12 +22,19 @@ test("#agy plugin validate #processes Antigravity Swarm hooks", () => {
 
 test("#agents #planner and reviewer preserve ASW execution contracts", async () => {
   const planner = await readFile(`${repoRoot}/plugins/antigravity-swarm/agents/asw-planner.toml`, "utf8");
+  const analysis = await readFile(`${repoRoot}/plugins/antigravity-swarm/agents/asw-planning-analysis.toml`, "utf8");
+  const audit = await readFile(`${repoRoot}/plugins/antigravity-swarm/agents/asw-plan-audit.toml`, "utf8");
   const reviewer = await readFile(`${repoRoot}/plugins/antigravity-swarm/agents/asw-reviewer.toml`, "utf8");
 
   assert.match(planner, /\.asw\/plans\/<slug>\.md/);
   assert.match(planner, /## TODOs/);
   assert.match(planner, /Next: start-work <plan-name>/);
   assert.match(planner, /real-surface QA/i);
+
+  assert.match(analysis, /planning analysis/i);
+  assert.match(analysis, /execution risks/i);
+  assert.match(audit, /ASW PLAN APPROVED/);
+  assert.match(audit, /QA scenario/i);
 
   assert.match(reviewer, /ASW APPROVED/);
   assert.match(reviewer, /ASW REJECTED/);

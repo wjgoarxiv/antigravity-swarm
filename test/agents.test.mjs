@@ -15,6 +15,8 @@ const forbiddenFragments = [
   "O" + "MO",
   "Cod" + "ex",
   "g" + "pt-",
+  "me" + "tis",
+  "mo" + "mus",
 ];
 
 test("#agents #ships complete ASW core agent inventory", async () => {
@@ -25,7 +27,9 @@ test("#agents #ships complete ASW core agent inventory", async () => {
   assert.deepEqual(files, [
     "asw-explorer.toml",
     "asw-librarian.toml",
+    "asw-plan-audit.toml",
     "asw-planner.toml",
+    "asw-planning-analysis.toml",
     "asw-reviewer.toml",
   ]);
 
@@ -47,7 +51,9 @@ test("#agents #use Antigravity-native role contracts instead of legacy harness p
   const expected = {
     "asw-explorer.toml": ["Antigravity repository explorer", "Output contract", "When to invoke", "Read-only"],
     "asw-librarian.toml": ["Antigravity external researcher", "official documentation", "version", "citations"],
+    "asw-plan-audit.toml": ["Antigravity plan audit", "Read-only", "ASW PLAN APPROVED", "ASW PLAN ITERATE"],
     "asw-planner.toml": [".asw/plans/<slug>.md", "Plan only", "QA scenarios", "Next: start-work <plan-name>"],
+    "asw-planning-analysis.toml": ["Antigravity planning analysis", "contradictions", "ambiguity", "execution risks"],
     "asw-reviewer.toml": ["ASW APPROVED", "ASW REJECTED", "package/privacy", "real-surface evidence"],
   };
 

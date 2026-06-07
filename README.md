@@ -159,9 +159,11 @@ asw-remove-ai-slops
 
 ### Agents
 
-Antigravity validates four subagent presets:
+Antigravity validates six subagent presets:
 
 - `asw-planner`
+- `asw-planning-analysis`
+- `asw-plan-audit`
 - `asw-explorer`
 - `asw-librarian`
 - `asw-reviewer`

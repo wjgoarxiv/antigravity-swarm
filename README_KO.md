@@ -159,9 +159,11 @@ asw-remove-ai-slops
 
 ### Agents
 
-Antigravity가 검증하는 subagent preset은 4개입니다.
+Antigravity가 검증하는 subagent preset은 6개입니다.
 
 - `asw-planner`
+- `asw-planning-analysis`
+- `asw-plan-audit`
 - `asw-explorer`
 - `asw-librarian`
 - `asw-reviewer`

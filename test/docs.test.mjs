@@ -35,6 +35,9 @@ test("#docs #README targets Antigravity CLI and documents ASW aliases", async ()
   assert.match(readme, /ctx \[█▋\] 81%\/131k/);
   assert.match(readme, /mq G-f\(M\)/);
   assert.match(readme, /model quota/i);
+  assert.match(readme, /Antigravity validates six subagent presets/);
+  assert.match(readme, /`asw-planning-analysis`/);
+  assert.match(readme, /`asw-plan-audit`/);
   assert.doesNotMatch(readme, /5h \[▏░\]|1w \[▊░\]|G-f \(Medium\) 3\.5 │ ctx \[▎░\] 9%\/1000k/);
   assert.match(readme, /~\/\.gemini\/config/);
   assert.doesNotMatch(readme, /py_compile|npm test|npm pack|agy plugin validate|Manual hook smoke|Manual HUD smoke|Legacy Python|hook payloads|returns `\\{\\}`|hooks\\.json/i);
@@ -74,6 +77,9 @@ test("#docs #Korean README and package metadata avoid deprecated Gemini-first in
   assert.match(readme, /ctx \[█▋\] 81%\/131k/);
   assert.match(readme, /mq G-f\(M\)/);
   assert.match(readme, /model quota/i);
+  assert.match(readme, /Antigravity가 검증하는 subagent preset은 6개입니다/);
+  assert.match(readme, /`asw-planning-analysis`/);
+  assert.match(readme, /`asw-plan-audit`/);
   assert.doesNotMatch(readme, /5h \[▏░\]|1w \[▊░\]|G-f \(Medium\) 3\.5 │ ctx \[▎░\] 9%\/1000k/);
   assert.match(readme, /~\/\.gemini\/config/);
   assert.doesNotMatch(readme, /py_compile|npm test|npm pack|agy plugin validate|훅 스모크|HUD 스모크|기존 Python|hook payload|`\\{\\}`|hooks\\.json/i);

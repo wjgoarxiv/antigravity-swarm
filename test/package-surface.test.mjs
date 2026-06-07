@@ -7,7 +7,9 @@ const repoRoot = new URL("..", import.meta.url).pathname;
 const expectedAgentFiles = [
   "asw-explorer.toml",
   "asw-librarian.toml",
+  "asw-plan-audit.toml",
   "asw-planner.toml",
+  "asw-planning-analysis.toml",
   "asw-reviewer.toml",
 ];
 
@@ -62,5 +64,7 @@ test("#agent surface #ASW roles match the expected agent inventory", async () =>
   assert.match(await readFile(`${aswDir}/asw-planner.toml`, "utf8"), /planner|plan/i);
   assert.match(await readFile(`${aswDir}/asw-explorer.toml`, "utf8"), /read-only|inspect|search/i);
   assert.match(await readFile(`${aswDir}/asw-librarian.toml`, "utf8"), /source|documentation|citation/i);
+  assert.match(await readFile(`${aswDir}/asw-planning-analysis.toml`, "utf8"), /contradictions|ambiguity|execution risks/i);
+  assert.match(await readFile(`${aswDir}/asw-plan-audit.toml`, "utf8"), /ASW PLAN APPROVED|ASW PLAN ITERATE/);
   assert.match(await readFile(`${aswDir}/asw-reviewer.toml`, "utf8"), /ASW APPROVED|ASW REJECTED/);
 });

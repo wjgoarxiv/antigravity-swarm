@@ -25,7 +25,7 @@
 
 <p align="center">
   <img alt="Antigravity CLI" src="https://img.shields.io/badge/Antigravity-CLI-00D5FF?style=for-the-badge&labelColor=111827" />
-  <img alt="ASW v0.2.3" src="https://img.shields.io/badge/ASW-v0.2.3-8B5CF6?style=for-the-badge&labelColor=111827" />
+  <img alt="ASW v0.2.4" src="https://img.shields.io/badge/ASW-v0.2.4-8B5CF6?style=for-the-badge&labelColor=111827" />
   <img alt="Hooks skills agents HUD" src="https://img.shields.io/badge/hooks%20%2B%20skills%20%2B%20agents-HUD-22C55E?style=for-the-badge&labelColor=111827" />
   <img alt="MIT license" src="https://img.shields.io/badge/license-MIT-F59E0B?style=for-the-badge&labelColor=111827" />
 </p>
@@ -41,7 +41,7 @@
 
 Antigravity Swarm은 Antigravity CLI와 Antigravity IDE 위에 ASW 워크플로 레이어를 설치합니다. 짧은 호출어, 전역 스킬, hook route, subagent preset, 진단 가이드, 백그라운드 continuation, compact status line을 함께 제공합니다.
 
-예전 프로젝트가 Gemini-first swarm runner였다면, v0.2.3은 Antigravity용 큰 업데이트입니다. npm 설치, Antigravity plugin layout, ASW alias, hooks, subagents, LSP diagnostics guidance, 그리고 CLI가 데이터를 넘길 때 context, git, model quota를 보여주는 HUD까지 포함합니다.
+예전 프로젝트가 Gemini-first swarm runner였다면, v0.2.4는 Antigravity용 큰 업데이트입니다. npm 설치, Antigravity plugin layout, ASW alias, hooks, subagents, LSP diagnostics guidance, 그리고 CLI가 데이터를 넘길 때 context, git, model quota를 보여주는 HUD까지 포함합니다.
 
 > [!IMPORTANT]
 > 작업을 밀고 나갈 때는 `asw`를 입력하세요. 먼저 형태를 잡아야 할 때는 `asw-plan`, 마무리 전에는 `asw-review`가 좋습니다.
@@ -50,7 +50,7 @@ Antigravity Swarm은 Antigravity CLI와 Antigravity IDE 위에 ASW 워크플로 
 ## Quick Start
 
 ```bash
-npx antigravity-swarm install --hud
+npx --yes antigravity-swarm@0.2.4 install --permission-profile safe --hud
 ```
 
 그다음 Antigravity CLI나 IDE를 프로젝트에서 열고 이 흐름으로 사용합니다.
@@ -76,21 +76,30 @@ npx antigravity-swarm install --hud --hud-color rose
 
 색상: `cyan`, `blue`, `teal`, `green`, `lavender`, `rose`, `gold`, `orange`, `slate`, `gray`.
 
+설치 시 permission profile을 선택할 수 있습니다.
+
+```bash
+npx --yes antigravity-swarm@0.2.4 install --permission-profile safe
+npx --yes antigravity-swarm@0.2.4 --dry-run install --permission-profile balanced --settings-target /tmp/asw-settings.json
+```
+
+Profile: `safe`는 least-privilege/read-mostly이며 non-TTY 기본값입니다. `balanced`는 추천 ASW profile, `full`은 broad tool access라 신뢰하는 workspace에서만 사용해야 합니다. `none`은 파일만 설치하고 permission settings는 수정하지 않습니다. 기존 `permission` 설정은 `--force-permission` 없이는 보존됩니다. `custom`은 future work이며 아직 구현하지 않았습니다.
+
 기타 명령:
 
 ```bash
-npx antigravity-swarm --dry-run install
+npx antigravity-swarm --dry-run install --permission-profile safe
 npx antigravity-swarm verify
 npx antigravity-swarm install-hud
 npx antigravity-swarm uninstall
 ```
 
-ASW는 plugin을 `~/.gemini/config/` 아래에 설치하고, global skill shim을 만들며, `~/.gemini/antigravity-cli/settings.json`을 통해 HUD를 등록합니다. 이미 다른 `statusLine` 설정이 있으면 `--force-hud` 없이는 바꾸지 않습니다.
+ASW는 plugin을 `~/.gemini/config/` 아래에 설치하고, global skill shim을 만들며, `~/.gemini/antigravity-cli/settings.json`을 통해 HUD와 선택한 OpenCode-compatible `permission` profile을 등록합니다. 이미 다른 `statusLine` 설정이 있으면 `--force-hud` 없이는 바꾸지 않고, 기존 `permission` 설정도 `--force-permission` 없이는 보존합니다.
 
 <a id="large-update"></a>
 ## 큰 업데이트
 
-v0.2.3은 이름만 바꾼 버전이 아닙니다. script 중심 swarm에서 Antigravity workflow package로 중심을 옮겼습니다.
+v0.2.4는 이름만 바꾼 버전이 아닙니다. script 중심 swarm에서 Antigravity workflow package로 중심을 옮겼습니다.
 
 | 이전 | 지금 |
 |---|---|
@@ -182,7 +191,7 @@ ASW는 변경 파일의 실제 언어 검사를 유도하는 진단 가이드 ho
 일반적인 HUD 예시:
 
 ```text
-[✨ASW v0.2.3] │ GPT-OSS 120B (Medium) │ ctx [█▋] 81%/131k
+[✨ASW v0.2.4] │ GPT-OSS 120B (Medium) │ ctx [█▋] 81%/131k
 ```
 
 Antigravity가 `/usage` model quota row를 status line payload로 넘길 때는 ASW가 compact quota segment를 추가할 수 있습니다.

@@ -12,6 +12,7 @@ const shippedSources = [
   "bin/installer/main.mjs",
   "bin/installer/options.mjs",
   "bin/installer/paths.mjs",
+  "bin/installer/permissions.mjs",
   "bin/installer/ui.mjs",
   "plugins/antigravity-swarm/scripts/asw-hook.mjs",
   "plugins/antigravity-swarm/scripts/asw-lsp-check.mjs",

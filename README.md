@@ -25,7 +25,7 @@
 
 <p align="center">
   <img alt="Antigravity CLI" src="https://img.shields.io/badge/Antigravity-CLI-00D5FF?style=for-the-badge&labelColor=111827" />
-  <img alt="ASW v0.2.3" src="https://img.shields.io/badge/ASW-v0.2.3-8B5CF6?style=for-the-badge&labelColor=111827" />
+  <img alt="ASW v0.2.4" src="https://img.shields.io/badge/ASW-v0.2.4-8B5CF6?style=for-the-badge&labelColor=111827" />
   <img alt="Hooks skills agents HUD" src="https://img.shields.io/badge/hooks%20%2B%20skills%20%2B%20agents-HUD-22C55E?style=for-the-badge&labelColor=111827" />
   <img alt="MIT license" src="https://img.shields.io/badge/license-MIT-F59E0B?style=for-the-badge&labelColor=111827" />
 </p>
@@ -41,7 +41,7 @@
 
 Antigravity Swarm installs an ASW workflow layer for Antigravity CLI and Antigravity IDE. It bundles short wake words, global skills, hook routes, subagent presets, diagnostics guidance, background continuation, and a compact status line.
 
-The old repo was a Gemini-first swarm runner. v0.2.3 is the large Antigravity rebuild: npm install, Antigravity-native plugin layout, ASW aliases, hooks, subagents, LSP diagnostics guidance, and a HUD that can surface context, git state, and model quota data when the CLI provides it.
+The old repo was a Gemini-first swarm runner. v0.2.4 is the large Antigravity rebuild: npm install, Antigravity-native plugin layout, ASW aliases, hooks, subagents, LSP diagnostics guidance, and a HUD that can surface context, git state, and model quota data when the CLI provides it.
 
 > [!IMPORTANT]
 > Type `asw` when the work is ready to move. Type `asw-plan` when the work needs shape first. Type `asw-review` before you call it done.
@@ -50,7 +50,7 @@ The old repo was a Gemini-first swarm runner. v0.2.3 is the large Antigravity re
 ## Quick Start
 
 ```bash
-npx antigravity-swarm install --hud
+npx --yes antigravity-swarm@0.2.4 install --permission-profile safe --hud
 ```
 
 Then open Antigravity CLI or IDE in a project and use the loop:
@@ -76,21 +76,30 @@ npx antigravity-swarm install --hud --hud-color rose
 
 Available colors: `cyan`, `blue`, `teal`, `green`, `lavender`, `rose`, `gold`, `orange`, `slate`, `gray`.
 
+Choose an installer permission profile:
+
+```bash
+npx --yes antigravity-swarm@0.2.4 install --permission-profile safe
+npx --yes antigravity-swarm@0.2.4 --dry-run install --permission-profile balanced --settings-target /tmp/asw-settings.json
+```
+
+Profiles: `safe` is least-privilege/read-mostly and is the non-TTY default, `balanced` is the recommended ASW profile, `full` grants broad tool access and should only be used in trusted workspaces, and `none` installs files without modifying permission settings. Existing `permission` settings are preserved unless `--force-permission` is passed. `custom` is future work and is not implemented.
+
 Other useful commands:
 
 ```bash
-npx antigravity-swarm --dry-run install
+npx antigravity-swarm --dry-run install --permission-profile safe
 npx antigravity-swarm verify
 npx antigravity-swarm install-hud
 npx antigravity-swarm uninstall
 ```
 
-ASW writes the plugin under `~/.gemini/config/`, installs global skill shims, and registers the HUD through `~/.gemini/antigravity-cli/settings.json`. Existing different `statusLine` settings are left alone unless `--force-hud` is passed.
+ASW writes the plugin under `~/.gemini/config/`, installs global skill shims, and registers the HUD and optional OpenCode-compatible `permission` profile through `~/.gemini/antigravity-cli/settings.json`. Existing different `statusLine` settings are left alone unless `--force-hud` is passed, and existing `permission` settings are left alone unless `--force-permission` is passed.
 
 <a id="large-update"></a>
 ## Large Update
 
-v0.2.3 is not a rename pass. It moves the project from a script-oriented swarm into an Antigravity workflow package.
+v0.2.4 is not a rename pass. It moves the project from a script-oriented swarm into an Antigravity workflow package.
 
 | Before | Now |
 |---|---|
@@ -182,7 +191,7 @@ ASW includes a diagnostics guidance hook and skill guidance for running real lan
 The typical HUD line is compact:
 
 ```text
-[✨ASW v0.2.3] │ GPT-OSS 120B (Medium) │ ctx [█▋] 81%/131k
+[✨ASW v0.2.4] │ GPT-OSS 120B (Medium) │ ctx [█▋] 81%/131k
 ```
 
 If Antigravity passes `/usage` model quota rows into the status line payload, ASW can append a compact quota segment:

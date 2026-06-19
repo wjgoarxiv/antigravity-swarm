@@ -3,7 +3,7 @@
 import { stdin, stdout } from "node:process";
 import { redactSecrets } from "./asw-redact.mjs";
 
-const ASW_VERSION = "0.2.3";
+const ASW_VERSION = "0.2.4";
 const palette = {
   cyan: "38;5;51",
   blue: "38;5;75",

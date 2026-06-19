@@ -3,10 +3,12 @@ import { readdir, stat } from "node:fs/promises";
 import { join } from "node:path";
 import { copyTree, removeTree, rewriteInstalledHooks, writeSkillShims } from "./files.mjs";
 import { installHud } from "./hud.mjs";
+import { installPermissionProfile } from "./permissions.mjs";
 import { defaultSettingsPath, defaultTarget, pluginName, pluginSource } from "./paths.mjs";
 import {
   chooseHudColor,
   chooseInstallAction,
+  choosePermissionProfile,
   paint,
   printMode,
   shouldPrompt,
@@ -31,7 +33,8 @@ async function interactive(options) {
   const action = await chooseInstallAction(options);
   if (action === "install-hud-full") {
     const hudColor = await chooseHudColor(options);
-    return install({ ...options, command: "install", hud: true, hudColor, forceTty: true });
+    const permissionProfile = options.permissionProfile || await choosePermissionProfile(options);
+    return install({ ...options, command: "install", hud: true, hudColor, permissionProfile, forceTty: true });
   }
   if (action === "install-hud") {
     const hudColor = await chooseHudColor(options);
@@ -41,7 +44,8 @@ async function interactive(options) {
     console.log("Verify existing install selected. Run the verify command when the target already has ASW installed.");
     return;
   }
-  return install({ ...options, command: "install", forceTty: true });
+  const permissionProfile = options.permissionProfile || await choosePermissionProfile(options);
+  return install({ ...options, command: "install", permissionProfile, forceTty: true });
 }
 
 export async function install(options) {
@@ -51,11 +55,13 @@ export async function install(options) {
   await withSpinner(options, "plugin assets", () => copyTree(pluginSource, destination, options));
   await withSpinner(options, "global skill shims", () => writeSkillShims(options));
   if (options.dryRun) {
+    await installPermissionProfile(options);
     if (options.hud) await installHud(options);
     console.log(paint(options, "yellow", "DRY RUN complete: no files were written."));
     return;
   }
   await withSpinner(options, "hook paths", () => rewriteInstalledHooks(options));
+  await installPermissionProfile(options);
   if (options.hud) await installHud(options);
   showInstallSummary(options, [
     `${paint(options, "green", "Ready")} plugin, hooks, and skills`,
@@ -109,13 +115,25 @@ function help() {
 
 Usage:
   antigravity-swarm --interactive
-  antigravity-swarm install [--target <dir>] [--dry-run] [--hud] [--hud-color <name>] [--settings-target <file>] [--force-hud]
+  antigravity-swarm install [--target <dir>] [--dry-run] [--hud] [--hud-color <name>] [--settings-target <file>] [--permission-profile <safe|balanced|full|none>] [--force-permission] [--force-hud]
   antigravity-swarm install-hud [--target <dir>] [--hud-color <name>] [--settings-target <file>] [--force-hud]
   antigravity-swarm verify [--target <dir>]
   antigravity-swarm uninstall [--target <dir>] [--dry-run]
 
 HUD colors:
   cyan, blue, teal, green, lavender, rose, gold, orange, slate, gray
+
+Permission profiles:
+  safe      least privilege / read-mostly (default for non-TTY installs)
+  balanced  recommended ASW permissions with prompts for writes and shell
+  full      broad tool access; use only when you trust the workspace
+  none      install files but do not modify permission settings
+  custom    future work; not implemented
+
+Environment:
+  ASW_PERMISSION_PROFILE=safe|balanced|full|none
+
+Existing permission settings are preserved unless --force-permission is passed.
 
 Default target:
   ${defaultTarget}

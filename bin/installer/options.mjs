@@ -1,5 +1,6 @@
 import { resolve } from "node:path";
 import { defaultSettingsPath, defaultTarget } from "./paths.mjs";
+import { normalizePermissionProfile } from "./permissions.mjs";
 
 export function parseArgs(argv, env = process.env) {
   const options = {
@@ -9,8 +10,10 @@ export function parseArgs(argv, env = process.env) {
     dryRun: false,
     hud: false,
     forceHud: false,
+    forcePermission: false,
     interactive: false,
     hudColor: "cyan",
+    permissionProfile: normalizePermissionProfile(env.ASW_PERMISSION_PROFILE),
     color: env.FORCE_COLOR === "1" || (!env.NO_COLOR && env.FORCE_COLOR !== "0"),
   };
 
@@ -35,6 +38,12 @@ export function parseArgs(argv, env = process.env) {
       options.hud = true;
     } else if (arg === "--force-hud") {
       options.forceHud = true;
+    } else if (arg === "--force-permission") {
+      options.forcePermission = true;
+    } else if (arg === "--permission-profile") {
+      const value = rest[++i];
+      if (!value || value.startsWith("-")) throw new Error("Missing value for --permission-profile. Supported profiles: safe, balanced, full, none");
+      options.permissionProfile = normalizePermissionProfile(value);
     } else if (arg === "--hud-color") {
       options.hudColor = (rest[++i] ?? "cyan").toLowerCase();
     } else if (arg === "--interactive") {

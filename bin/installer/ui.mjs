@@ -110,6 +110,31 @@ export async function chooseHudColor(options, input = defaultIn, output = defaul
   return hudColors.includes(answer) ? answer : options.hudColor;
 }
 
+export async function choosePermissionProfile(options, input = defaultIn, output = defaultOut) {
+  console.log(sectionTitle(options, "Permission profile"));
+  console.log(paintHud(options, "╭────────────────────────────────────────────────╮"));
+  console.log(menuLine(options, "01", "safe      least privilege / read-mostly", panelWidth - 2));
+  console.log(menuLine(options, "02", "balanced  recommended prompts", panelWidth - 2));
+  console.log(menuLine(options, "03", "full      broad access; trust only", panelWidth - 2));
+  console.log(menuLine(options, "04", "none      do not modify permissions", panelWidth - 2));
+  console.log(paintHud(options, "╰────────────────────────────────────────────────╯"));
+  const answer = (await promptLine("Permission profile: ", input, output)).toLowerCase();
+  return {
+    "1": "safe",
+    "01": "safe",
+    safe: "safe",
+    "2": "balanced",
+    "02": "balanced",
+    balanced: "balanced",
+    "3": "full",
+    "03": "full",
+    full: "full",
+    "4": "none",
+    "04": "none",
+    none: "none",
+  }[answer] ?? "safe";
+}
+
 function menuLine(options, key, label, width = 31) {
   const visiblePrefix = key.length > 1 ? key : `${key})`;
   const body = `${paint(options, "yellow", visiblePrefix)} ${label}`;

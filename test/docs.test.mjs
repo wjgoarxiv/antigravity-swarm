@@ -22,6 +22,10 @@ test("#docs #README targets Antigravity CLI and documents ASW aliases", async ()
   assert.match(readme, /executor/i);
   assert.match(readme, /reviewer/i);
   assert.match(readme, /npx antigravity-swarm install/);
+  assert.match(readme, /npx --yes antigravity-swarm@0\.2\.4 install --permission-profile safe/);
+  assert.match(readme, /--permission-profile balanced/);
+  assert.match(readme, /--force-permission/);
+  assert.match(readme, /full.*broad tool access/i);
   assert.match(readme, /`asw`/);
   assert.match(readme, /`asw-plan`/);
   assert.match(readme, /`start-work`/);
@@ -48,7 +52,7 @@ test("#docs #README targets Antigravity CLI and documents ASW aliases", async ()
   assert.doesNotMatch(readme, /dependency-free spinner|evidence-driven|seamless|leverage|cutting-edge|robust|supercharge|next-level/i);
   assert.doesNotMatch(readme, /frictionless|game-changing|revolutionary|magic|10x|autonomous army|AI workforce/i);
   assert.doesNotMatch(readme, /stargazing project|sky map|constellation/i);
-  assert.equal(plugin.version, "0.2.3");
+  assert.equal(plugin.version, "0.2.4");
   assert.equal(plugin.name, "antigravity-swarm");
 });
 
@@ -68,6 +72,10 @@ test("#docs #Korean README and package metadata avoid deprecated Gemini-first in
   assert.match(readme, /executor|실행/i);
   assert.match(readme, /reviewer|리뷰/i);
   assert.match(readme, /npx antigravity-swarm install/);
+  assert.match(readme, /npx --yes antigravity-swarm@0\.2\.4 install --permission-profile safe/);
+  assert.match(readme, /--permission-profile balanced/);
+  assert.match(readme, /--force-permission/);
+  assert.match(readme, /full.*broad tool access/i);
   assert.match(readme, /HUD/);
   assert.match(readme, /`start-work`/);
   assert.match(readme, /`asw-start-work`/);
@@ -91,7 +99,7 @@ test("#docs #Korean README and package metadata avoid deprecated Gemini-first in
   assert.doesNotMatch(readme, /antigravity-cli\/plugins|antigravity-cli\/skills/);
   assert.equal(pkg.bin["antigravity-swarm"], "bin/antigravity-swarm.js");
   assert.equal(pkg.type, "module");
-  assert.equal(pkg.version, "0.2.3");
+  assert.equal(pkg.version, "0.2.4");
   assert.ok(pkg.files.includes("plugins/antigravity-swarm"));
 });
 

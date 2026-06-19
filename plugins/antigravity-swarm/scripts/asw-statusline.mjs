@@ -1,8 +1,9 @@
 #!/usr/bin/env node
 
 import { stdin, stdout } from "node:process";
+import { redactSecrets } from "./asw-redact.mjs";
 
-const ASW_VERSION = "0.2.2";
+const ASW_VERSION = "0.2.3";
 const palette = {
   cyan: "38;5;51",
   blue: "38;5;75",
@@ -52,7 +53,7 @@ function gauge(value) {
 }
 
 function modelName(model) {
-  const raw = model?.display_name ?? model?.id ?? "model";
+  const raw = redactSecrets(model?.display_name ?? model?.id ?? "model");
   const text = String(raw).replace(/\s+/g, " ").trim();
   const gemini = text.match(/^Gemini\s+([\d.]+)\s+Flash(?:\s+\(([^)]+)\))?/i);
   if (gemini) return gemini[2] ? `G-f (${gemini[2]}) ${gemini[1]}` : `G-f ${gemini[1]}`;
@@ -136,7 +137,7 @@ function remainingGauge(value) {
 }
 
 function compactQuotaModelName(value) {
-  const text = modelName({ display_name: value });
+  const text = modelName({ display_name: redactSecrets(value) });
   const tier = text.match(/^(G-[fp]) \(([^)]+)\) [\d.]+$/);
   if (tier) return `${tier[1]}(${tier[2][0].toUpperCase()})`;
   const plain = text.match(/^(G-[fp]) [\d.]+$/);
@@ -160,7 +161,7 @@ function gitLine(vcs) {
   const count = Number(vcs.added ?? vcs.changed ?? vcs.changes ?? 0);
   const delta = Number.isFinite(count) && count > 0 ? ` +${count}` : "";
   const clean = vcs.dirty ? "!" : "✓";
-  return `git ${vcs.branch}${delta} ${clean}`;
+  return `git ${redactSecrets(vcs.branch)}${delta} ${clean}`;
 }
 
 function render(payload) {

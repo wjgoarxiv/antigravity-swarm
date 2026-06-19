@@ -16,7 +16,7 @@
             "type": "command",
             "command": "node \"${PLUGIN_ROOT}/scripts/asw-lsp-check.mjs\"",
             "timeout": 60,
-            "statusMessage": "ASW: checking diagnostics"
+            "statusMessage": "ASW: diagnostics guidance hook"
           }
         ]
       }

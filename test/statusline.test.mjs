@@ -23,7 +23,7 @@ test("#statusline #renders compact Antigravity CLI HUD text", () => {
   });
 
   assert.equal(result.status, 0, result.stderr);
-  assert.match(result.stdout, /\[✨ASW v0\.2\.2\]/);
+  assert.match(result.stdout, /\[✨ASW v0\.2\.3\]/);
   assert.match(result.stdout, /ctx \[▉░\] 42%/);
   assert.match(result.stdout, /git main !/);
   assert.doesNotMatch(result.stdout, /5h|1w|\?/);
@@ -48,7 +48,7 @@ test("#statusline #renders visible ANSI output from Antigravity-shaped payload",
   });
 
   assert.equal(result.status, 0, result.stderr);
-  assert.match(result.stdout, /\x1b\[1;38;5;51m\[✨ASW v0\.2\.2\]\x1b\[0m/);
+  assert.match(result.stdout, /\x1b\[1;38;5;51m\[✨ASW v0\.2\.3\]\x1b\[0m/);
   assert.match(result.stdout, /ASW/);
   assert.match(result.stdout, /ctx \[▍░\] 17%/);
   assert.doesNotMatch(result.stdout, /5h|1w|\?/);
@@ -73,7 +73,7 @@ test("#statusline #renders ASW gauge format with selected palette and quotas", (
   });
 
   assert.equal(result.status, 0, result.stderr);
-  assert.match(result.stdout, /\[✨ASW v0\.2\.2\]/);
+  assert.match(result.stdout, /\[✨ASW v0\.2\.3\]/);
   assert.match(result.stdout, /G-f 3\.5/);
   assert.match(result.stdout, /ctx \[▎░\] 9%\/1000k/);
   assert.match(result.stdout, /5h \[▏░\] 4% ↻2h15m/);
@@ -95,7 +95,7 @@ test("#statusline #applies selected HUD color to every visible segment", () => {
   });
 
   assert.equal(result.status, 0, result.stderr);
-  assert.match(result.stdout, /\x1b\[1;38;5;213m\[✨ASW v0\.2\.2\]\x1b\[0m/);
+  assert.match(result.stdout, /\x1b\[1;38;5;213m\[✨ASW v0\.2\.3\]\x1b\[0m/);
   assert.match(result.stdout, /\x1b\[1;38;5;213mG-f 3\.5\x1b\[0m/);
   assert.match(result.stdout, /\x1b\[1;38;5;213mctx \[▏░\] 4%\/1049k\x1b\[0m/);
   assert.match(result.stdout, /\x1b\[1;38;5;213mgit main \+3 ✓\x1b\[0m/);

@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import { readFileSync } from "node:fs";
+import { safeMode } from "./asw-redact.mjs";
 
 function readPayload() {
   try {
@@ -12,7 +13,9 @@ function readPayload() {
 }
 
 const payload = readPayload();
-if (payload.fullyIdle === false) {
+if (safeMode(payload)) {
+  process.stdout.write(JSON.stringify({ decision: "" }));
+} else if (payload.fullyIdle === false) {
   process.stdout.write(JSON.stringify({
     decision: "continue",
     reason: "Antigravity Swarm detected active background work. Continue until spawned work is idle, verified, and cleaned up.",
@@ -20,4 +23,3 @@ if (payload.fullyIdle === false) {
 } else {
   process.stdout.write(JSON.stringify({ decision: "" }));
 }
-

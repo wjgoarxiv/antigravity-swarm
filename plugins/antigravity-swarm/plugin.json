@@ -1,6 +1,6 @@
 {
   "name": "antigravity-swarm",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "description": "Antigravity CLI swarm workflow skills, hooks, and diagnostics.",
   "author": "Antigravity Swarm Contributors",
   "license": "MIT",
@@ -8,9 +8,9 @@
   "hooks": "./hooks/hooks.json",
   "interface": {
     "displayName": "Antigravity Swarm",
-    "shortDescription": "ASW planning, goal, loop, review, hooks, agents, HUD, and diagnostics for Antigravity CLI.",
+    "shortDescription": "ASW planning, goal, loop, review, hooks, agents, HUD, and diagnostics guidance for Antigravity CLI.",
     "category": "Developer Tools",
-    "capabilities": ["Skills", "Hooks", "LSP Diagnostics", "Subagents", "Status Line", "Workflow"],
+    "capabilities": ["Skills", "Hooks", "Diagnostics Guidance", "Subagents", "Status Line", "Workflow"],
     "defaultPrompt": [
       "asw-plan this migration",
       "start-work the generated plan",

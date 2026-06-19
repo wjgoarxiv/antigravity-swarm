@@ -33,6 +33,7 @@ yarn-error.log
 .gemini/
 .antigravity/
 .asw/
+.litopencode/
 .omo/
 .omx/
 .agents/.runtime/

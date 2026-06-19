@@ -1,15 +1,16 @@
 #!/usr/bin/env node
 
 import { readFileSync } from "node:fs";
+import { redactSecrets, safeMode } from "./asw-redact.mjs";
 
-const WORD = "(?<![A-Za-z0-9_-])";
-const END = "(?![A-Za-z0-9_-])";
-const PLAN_RE = new RegExp(`${WORD}(?:asw-plan|swarmwork-plan)${END}`, "i");
-const GOAL_RE = new RegExp(`${WORD}(?:asw-goal|swarmwork-goal)${END}`, "i");
-const START_WORK_RE = new RegExp(`${WORD}(?:start-work|asw-start-work|swarmwork-start)${END}`, "i");
-const CLEANUP_RE = new RegExp(`${WORD}(?:asw-cleanup|asw-remove-ai-slops|swarmwork-cleanup)${END}`, "i");
-const LOOP_RE = new RegExp(`${WORD}(?:asw-loop|asw|swarmwork)${END}`, "i");
-const REVIEW_RE = new RegExp(`${WORD}(?:asw-review|swarmwork-review)${END}`, "i");
+const WORD = "(?<![A-Za-z0-9_/-])";
+const END = "(?![A-Za-z0-9_/-])";
+const PLAN_RE = new RegExp(`${WORD}(?:asw-plan|swarmwork-plan|asw\\s+plan)${END}`);
+const GOAL_RE = new RegExp(`${WORD}(?:asw-goal|swarmwork-goal|asw\\s+goal)${END}`);
+const START_WORK_RE = new RegExp(`${WORD}(?:start-work|asw-start-work|swarmwork-start|asw\\s+start\\s+work)${END}`);
+const CLEANUP_RE = new RegExp(`${WORD}(?:asw-cleanup|asw-remove-ai-slops|swarmwork-cleanup|asw\\s+cleanup)${END}`);
+const LOOP_RE = new RegExp(`${WORD}(?:asw-loop|asw|swarmwork)${END}`);
+const REVIEW_RE = new RegExp(`${WORD}(?:asw-review|swarmwork-review|asw\\s+review)${END}`);
 
 function readPayload() {
   try {
@@ -136,6 +137,7 @@ You are Antigravity Swarm's reviewer. Inspect the diff for behavioral regression
 Lead with findings ordered by severity. Treat missing manual QA evidence as a blocking issue.`;
 
 function directiveFor(prompt) {
+  prompt = redactSecrets(stripIgnoredPromptRegions(prompt));
   if (PLAN_RE.test(prompt)) return PLAN_DIRECTIVE;
   if (GOAL_RE.test(prompt)) return GOAL_DIRECTIVE;
   if (START_WORK_RE.test(prompt)) return START_WORK_DIRECTIVE;
@@ -145,7 +147,14 @@ function directiveFor(prompt) {
   return "";
 }
 
-const directive = directiveFor(promptFrom(readPayload()));
+function stripIgnoredPromptRegions(prompt) {
+  return String(prompt ?? "")
+    .replace(/```[\s\S]*?```/g, " ")
+    .replace(/`[^`]*`/g, " ");
+}
+
+const payload = readPayload();
+const directive = safeMode(payload) ? "" : directiveFor(promptFrom(payload));
 if (!directive) {
   process.stdout.write("{}");
 } else {
